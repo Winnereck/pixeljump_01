@@ -1212,10 +1212,12 @@ html, body {
     height: 100%;
     background: rgba(0, 0, 0, 0.85);
     z-index: 9999990;
+    pointer-events: none; /* WICHTIG: Blockiert keine Clicks wenn inactive */
 }
 
 #overlay.active {
     display: block;
+    pointer-events: auto; /* Nur aktiv wenn modal offen */
 }
 
 #name-modal {
@@ -1431,53 +1433,60 @@ function checkGameOver() {
 
 setInterval(checkGameOver, 100);
 
-// Pico-8 Button Reading
+// Pico-8 Button Reading - BLOCK GAME INPUTS WHEN MODAL OPEN
 function checkMenuControls() {
-    if (!document.getElementById('name-modal').classList.contains('active')) {
+    const modalActive = document.getElementById('name-modal').classList.contains('active');
+    
+    if (!modalActive) {
         return; // Modal not open
     }
     
-    if (typeof pico8_buttons === 'undefined' || !pico8_buttons) return;
-    
-    const buttons = pico8_buttons[0];
-    
-    // Detect button press (not hold)
-    if (buttons !== lastButtonState) {
-        const pressed = buttons & ~lastButtonState; // New presses only
+    // CRITICAL: Block game inputs by setting buttons to 0
+    if (typeof pico8_buttons !== 'undefined' && pico8_buttons) {
+        // Save buttons for menu control
+        const buttons = pico8_buttons[0];
         
-        if (!inHighscoreView) {
-            // Game Over Menu
-            const menuItems = 3;
+        // Immediately zero out to prevent game from seeing inputs
+        pico8_buttons[0] = 0;
+        
+        // Detect button press (not hold)
+        if (buttons !== lastButtonState) {
+            const pressed = buttons & ~lastButtonState; // New presses only
             
-            // UP (0x4)
-            if (pressed & 0x4) {
-                menuIndex = (menuIndex - 1 + menuItems) % menuItems;
-                updateMenuSelection();
-                playMenuSound();
-            }
-            
-            // DOWN (0x8)
-            if (pressed & 0x8) {
-                menuIndex = (menuIndex + 1) % menuItems;
-                updateMenuSelection();
-                playMenuSound();
-            }
-            
-            // O Button (0x10) or X Button (0x20) - Select
-            if (pressed & 0x10 || pressed & 0x20) {
-                selectMenuItem();
-                playSelectSound();
-            }
-        } else {
-            // Highscore View - only O/X to go back
-            if (pressed & 0x10 || pressed & 0x20) {
-                backToGameOver();
-                playSelectSound();
+            if (!inHighscoreView) {
+                // Game Over Menu
+                const menuItems = 3;
+                
+                // UP (0x4)
+                if (pressed & 0x4) {
+                    menuIndex = (menuIndex - 1 + menuItems) % menuItems;
+                    updateMenuSelection();
+                    playMenuSound();
+                }
+                
+                // DOWN (0x8)
+                if (pressed & 0x8) {
+                    menuIndex = (menuIndex + 1) % menuItems;
+                    updateMenuSelection();
+                    playMenuSound();
+                }
+                
+                // O Button (0x10) or X Button (0x20) - Select
+                if (pressed & 0x10 || pressed & 0x20) {
+                    selectMenuItem();
+                    playSelectSound();
+                }
+            } else {
+                // Highscore View - only O/X to go back
+                if (pressed & 0x10 || pressed & 0x20) {
+                    backToGameOver();
+                    playSelectSound();
+                }
             }
         }
+        
+        lastButtonState = buttons;
     }
-    
-    lastButtonState = buttons;
 }
 
 setInterval(checkMenuControls, 50); // Check every 50ms
@@ -1540,6 +1549,7 @@ function showGameOverModal() {
 }
 
 // Submit Score
+// Submit Score - FIXED
 window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
     const playerName = nameInput.value.trim();
@@ -1550,9 +1560,11 @@ window.submitCurrentScore = async function() {
     // Close keyboard on mobile
     nameInput.blur();
     
-    const submitBtn = document.getElementById('submit-btn');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span style="font-size:1.2rem;">⏳</span> SAVING...';
+    // Update menu item (not button!)
+    const menuItems = document.querySelectorAll('.menu-item');
+    if (menuItems[0]) {
+        menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
+    }
     
     // Wait for keyboard to close
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -1562,7 +1574,9 @@ window.submitCurrentScore = async function() {
         
         if (result.success) {
             console.log('✅ Saved!');
-            submitBtn.innerHTML = '<span style="font-size:1.2rem;">✓</span> SAVED!';
+            if (menuItems[0]) {
+                menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVED!';
+            }
             
             // Auto-show highscores
             setTimeout(() => {
@@ -1570,14 +1584,16 @@ window.submitCurrentScore = async function() {
             }, 1000);
         } else {
             console.error('❌ Failed:', result.error);
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<span style="font-size:1.2rem;">▶</span> SAVE SCORE';
+            if (menuItems[0]) {
+                menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
+            }
             alert('Failed: ' + result.error);
         }
     } else {
         console.error('❌ Firebase not loaded!');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span style="font-size:1.2rem;">▶</span> SAVE SCORE';
+        if (menuItems[0]) {
+            menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
+        }
         alert('Firebase not ready');
     }
 };
@@ -1662,7 +1678,7 @@ window.refreshHighscores = async function() {
     await loadHighscores();
 };
 
-// Hide Modal
+// Hide Modal - FIXED
 function hideModal() {
     document.getElementById('overlay').classList.remove('active');
     document.getElementById('name-modal').classList.remove('active');
@@ -1672,10 +1688,13 @@ function hideModal() {
     menuIndex = 0;
     inHighscoreView = false;
     
-    const submitBtn = document.getElementById('submit-btn');
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<span style="font-size:1.2rem;">▶</span> SAVE SCORE';
+    // Reset menu items
+    const menuItems = document.querySelectorAll('.menu-item');
+    if (menuItems[0]) {
+        menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
+    }
 }
+
 
 // Escape HTML
 function escapeHtml(text) {
@@ -1712,6 +1731,7 @@ console.log('🎮 Use ↑↓ to navigate, O/X to select');
 <!-- END RETROSHAPES BRIDGE -->
 </body></html>
 </body></html>
+
 
 
 
