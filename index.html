@@ -1402,7 +1402,7 @@ let scoreSubmitted = false;
 let highscoresCache = [];
 
 // Menu State
-let menuIndex = 0; // 0=Save, 1=View Scores, 2=Play Again
+let menuIndex = 0;
 let lastButtonState = 0;
 let inHighscoreView = false;
 
@@ -1433,54 +1433,39 @@ function checkGameOver() {
 
 setInterval(checkGameOver, 100);
 
-// Pico-8 Button Reading - BLOCK GAME INPUTS WHEN MODAL OPEN
+// Pico-8 Button Reading - BLOCK GAME INPUTS
 function checkMenuControls() {
     const modalActive = document.getElementById('name-modal').classList.contains('active');
     
-    if (!modalActive) {
-        return; // Modal not open
-    }
+    if (!modalActive) return;
     
-    // CRITICAL: Block game inputs by setting buttons to 0
+    // BLOCK game inputs by zeroing buttons
     if (typeof pico8_buttons !== 'undefined' && pico8_buttons) {
-        // Save buttons for menu control
         const buttons = pico8_buttons[0];
+        pico8_buttons[0] = 0; // Block game
         
-        // Immediately zero out to prevent game from seeing inputs
-        pico8_buttons[0] = 0;
-        
-        // Detect button press (not hold)
         if (buttons !== lastButtonState) {
-            const pressed = buttons & ~lastButtonState; // New presses only
+            const pressed = buttons & ~lastButtonState;
             
             if (!inHighscoreView) {
-                // Game Over Menu
                 const menuItems = 3;
                 
-                // UP (0x4)
-                if (pressed & 0x4) {
+                if (pressed & 0x4) { // UP
                     menuIndex = (menuIndex - 1 + menuItems) % menuItems;
                     updateMenuSelection();
-                    playMenuSound();
                 }
                 
-                // DOWN (0x8)
-                if (pressed & 0x8) {
+                if (pressed & 0x8) { // DOWN
                     menuIndex = (menuIndex + 1) % menuItems;
                     updateMenuSelection();
-                    playMenuSound();
                 }
                 
-                // O Button (0x10) or X Button (0x20) - Select
-                if (pressed & 0x10 || pressed & 0x20) {
+                if (pressed & 0x10 || pressed & 0x20) { // O/X
                     selectMenuItem();
-                    playSelectSound();
                 }
             } else {
-                // Highscore View - only O/X to go back
                 if (pressed & 0x10 || pressed & 0x20) {
                     backToGameOver();
-                    playSelectSound();
                 }
             }
         }
@@ -1489,9 +1474,9 @@ function checkMenuControls() {
     }
 }
 
-setInterval(checkMenuControls, 50); // Check every 50ms
+setInterval(checkMenuControls, 50);
 
-// Update visual selection
+// Update Menu Selection
 function updateMenuSelection() {
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach((item, index) => {
@@ -1505,25 +1490,11 @@ function updateMenuSelection() {
     });
 }
 
-// Select current menu item
+// Select Menu Item
 function selectMenuItem() {
-    if (menuIndex === 0) {
-        submitCurrentScore();
-    } else if (menuIndex === 1) {
-        showHighscores();
-    } else if (menuIndex === 2) {
-        skipSubmit();
-    }
-}
-
-// Sound effects (optional - uses console beep)
-function playMenuSound() {
-    // Could use Web Audio API for actual Pico-8 style blips
-    console.log('🔊 Menu move');
-}
-
-function playSelectSound() {
-    console.log('🔊 Menu select');
+    if (menuIndex === 0) submitCurrentScore();
+    else if (menuIndex === 1) showHighscores();
+    else if (menuIndex === 2) skipSubmit();
 }
 
 // Show Game Over Modal
@@ -1542,31 +1513,25 @@ function showGameOverModal() {
     const nameInput = document.getElementById('player-name');
     nameInput.value = '';
     
-    // Don't auto-focus on mobile
     if (window.innerWidth > 600) {
         setTimeout(() => nameInput.focus(), 100);
     }
 }
 
-// Submit Score
-// Submit Score - FIXED
+// Submit Score - FIXED (no submitBtn)
 window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
     const playerName = nameInput.value.trim();
     const finalName = playerName || 'Anonymous';
     
     console.log('📤 Submitting:', finalName, pendingScore);
-    
-    // Close keyboard on mobile
     nameInput.blur();
     
-    // Update menu item (not button!)
+    // Update menu item text
     const menuItems = document.querySelectorAll('.menu-item');
-    if (menuItems[0]) {
-        menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
-    }
+    const saveItem = menuItems[0];
+    if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
     
-    // Wait for keyboard to close
     await new Promise(resolve => setTimeout(resolve, 300));
     
     if (typeof submitScoreToFirebase === 'function') {
@@ -1574,26 +1539,16 @@ window.submitCurrentScore = async function() {
         
         if (result.success) {
             console.log('✅ Saved!');
-            if (menuItems[0]) {
-                menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVED!';
-            }
-            
-            // Auto-show highscores
-            setTimeout(() => {
-                showHighscores();
-            }, 1000);
+            if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVED!';
+            setTimeout(() => showHighscores(), 1000);
         } else {
             console.error('❌ Failed:', result.error);
-            if (menuItems[0]) {
-                menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
-            }
+            if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
             alert('Failed: ' + result.error);
         }
     } else {
         console.error('❌ Firebase not loaded!');
-        if (menuItems[0]) {
-            menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
-        }
+        if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
         alert('Firebase not ready');
     }
 };
@@ -1673,12 +1628,12 @@ function displayHighscores() {
     listEl.innerHTML = html;
 }
 
-// Refresh Highscores
+// Refresh
 window.refreshHighscores = async function() {
     await loadHighscores();
 };
 
-// Hide Modal - FIXED
+// Hide Modal - FIXED (no submitBtn)
 function hideModal() {
     document.getElementById('overlay').classList.remove('active');
     document.getElementById('name-modal').classList.remove('active');
@@ -1688,13 +1643,12 @@ function hideModal() {
     menuIndex = 0;
     inHighscoreView = false;
     
-    // Reset menu items
+    // Reset menu item
     const menuItems = document.querySelectorAll('.menu-item');
     if (menuItems[0]) {
         menuItems[0].innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
     }
 }
-
 
 // Escape HTML
 function escapeHtml(text) {
@@ -1708,9 +1662,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const nameInput = document.getElementById('player-name');
     if (nameInput) {
         nameInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitCurrentScore();
-            }
+            if (e.key === 'Enter') submitCurrentScore();
         });
     }
 });
@@ -1729,7 +1681,6 @@ console.log('✅ Bridge ready with Pico-8 controls!');
 console.log('🎮 Use ↑↓ to navigate, O/X to select');
 </script>
 <!-- END RETROSHAPES BRIDGE -->
-</body></html>
 </body></html>
 
 
