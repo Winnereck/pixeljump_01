@@ -1125,123 +1125,148 @@ canvas{
 <!-- ============================================ -->
 <!-- RETROSHAPES HIGHSCORE BRIDGE -->
 <!-- ============================================ -->
-<div id="name-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1a1a1a; border:4px solid #fff; padding:2rem; z-index:10000; text-align:center; font-family:monospace;">
-    <h2 style="color:#fff; margin:0 0 1rem 0;">GAME OVER!</h2>
+<!-- Firebase Config -->
+<script src="./firebase-config.js"></script>
+
+<!-- Name Input Modal -->
+<div id="overlay"></div>
+<div id="name-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1a1a1a; border:4px solid #fff; padding:2rem; z-index:10000; text-align:center; max-width:90vw; box-sizing:border-box; font-family:monospace;">
+    <h2 style="color:#fff; margin:0 0 1rem 0; font-size:1.8rem;">GAME OVER!</h2>
     <p style="color:#fff; font-size:1.5rem; margin:1rem 0;">Score: <span id="final-score">0</span></p>
-    <input type="text" id="player-name" placeholder="Your Name" maxlength="20" value="Player" 
-           style="padding:0.5rem; font-size:1.2rem; width:200px; margin-bottom:1rem; background:#000; color:#fff; border:2px solid #fff; font-family:monospace;">
-    <br>
-    <button onclick="submitCurrentScore()" style="padding:0.5rem 2rem; font-size:1rem; background:#fff; color:#000; border:none; cursor:pointer; font-family:monospace; font-weight:bold;">
-        Submit Score
-    </button>
+    
+    <div style="margin:1.5rem 0;">
+        <p style="color:#888; font-size:0.9rem; margin-bottom:0.5rem;">Want to save your score?</p>
+        <input 
+            type="text" 
+            id="player-name" 
+            placeholder="Your Name (optional)" 
+            maxlength="20" 
+            value=""
+            style="padding:0.5rem; font-size:1rem; width:200px; max-width:100%; margin-bottom:1rem; background:#000; color:#fff; border:2px solid #fff; font-family:monospace; box-sizing:border-box;">
+    </div>
+    
+    <div style="display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; margin-top:1rem;">
+        <button id="submit-btn" onclick="submitCurrentScore()" style="padding:0.75rem 2rem; font-size:1rem; background:#4af626; color:#000; border:none; cursor:pointer; font-family:monospace; font-weight:bold;">
+            💾 Save Score
+        </button>
+        <button onclick="skipSubmit()" style="padding:0.75rem 2rem; font-size:1rem; background:#666; color:#fff; border:none; cursor:pointer; font-family:monospace;">
+            ↻ Play Again
+        </button>
+    </div>
 </div>
-<div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999;"></div>
+
+<style>
+#overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+}
+#overlay.active {
+    display: block;
+}
+#name-modal.active {
+    display: block;
+}
+</style>
 
 <script>
-// ============================================
-// RETROSHAPES SCORE BRIDGE
-// ============================================
 let pendingScore = 0;
 let isInIframe = window.parent !== window;
 let lastGameState = "";
 let scoreSubmitted = false;
 
-console.log('RetroShapes Bridge loaded. In iframe:', isInIframe);
-
-// Überwache pico8_gpio für Game State
-// Du musst im Lua Code schreiben:
-// poke(0x5f80, game_state_number)  -- 0=playing, 1=game_over etc.
-// poke(0x5f81, flr(score / 256))   -- high byte
-// poke(0x5f82, score % 256)        -- low byte
+console.log('🎮 Game Bridge loaded. In iframe:', isInIframe);
 
 function checkGameOver() {
     if (typeof pico8_gpio === 'undefined' || !pico8_gpio) return;
     
-    // GPIO Pin 0 = Game State (0=playing, 1=game_over)
     let gameState = pico8_gpio[0];
-    
-    // GPIO Pin 1,2 = Score (16-bit integer)
     let scoreHigh = pico8_gpio[1] || 0;
     let scoreLow = pico8_gpio[2] || 0;
     let currentScore = (scoreHigh * 256) + scoreLow;
     
-    // Wenn Game Over erreicht und noch nicht submitted
     if (gameState === 1 && lastGameState !== "game_over" && !scoreSubmitted) {
         lastGameState = "game_over";
         pendingScore = currentScore;
         
-        console.log('🎮 Game Over detected! Score:', pendingScore);
+        console.log('🎮 Game Over! Score:', pendingScore);
         
-        // Zeige Name Input Modal
         document.getElementById('final-score').textContent = pendingScore;
-        document.getElementById('overlay').style.display = 'block';
-        document.getElementById('name-modal').style.display = 'block';
-        document.getElementById('player-name').focus();
-        document.getElementById('player-name').select();
+        document.getElementById('overlay').classList.add('active');
+        document.getElementById('name-modal').classList.add('active');
+        
+        const nameInput = document.getElementById('player-name');
+        nameInput.value = '';
+        setTimeout(() => nameInput.focus(), 100);
     }
     
-    // Reset submitted flag wenn wieder am spielen
     if (gameState === 0) {
         lastGameState = "playing";
         scoreSubmitted = false;
     }
 }
 
-// Überprüfe alle 100ms
 setInterval(checkGameOver, 100);
 
-// Submit Score Funktion
-window.submitCurrentScore = function() {
+window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
-    const playerName = nameInput.value.trim() || 'Anonymous';
+    const playerName = nameInput.value.trim();
+    const finalName = playerName || 'Anonymous';
     
-    console.log('📤 Submitting score:', playerName, pendingScore);
+    console.log('📤 Submitting:', finalName, pendingScore);
     
-    // Hide modal
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('name-modal').style.display = 'none';
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '⏳ Saving...';
     
-    scoreSubmitted = true;
-    
-    // Send to parent window (Shopify)
-    if (isInIframe) {
-        window.parent.postMessage({
-            type: 'SUBMIT_SCORE',
-            data: {
-                name: playerName,
-                score: pendingScore,
-                timestamp: Date.now()
-            }
-        }, '*'); // In production: 'https://retroshapes.com'
+    if (typeof submitScoreToFirebase === 'function') {
+        const result = await submitScoreToFirebase(finalName, pendingScore);
         
-        console.log('✅ Score sent to parent window');
+        if (result.success) {
+            console.log('✅ Saved!');
+            submitBtn.innerHTML = '✅ Saved!';
+            setTimeout(() => hideModal(), 1500);
+        } else {
+            console.error('❌ Failed:', result.error);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '💾 Save Score';
+            alert('Failed: ' + result.error);
+        }
     } else {
-        console.log('⚠️ Not in iframe, score not sent');
-        alert('Score: ' + pendingScore + ' by ' + playerName);
+        console.error('❌ Firebase not loaded!');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '💾 Save Score';
     }
 };
 
-// Enter key support
-document.addEventListener('DOMContentLoaded', function() {
-    const nameInput = document.getElementById('player-name');
-    if (nameInput) {
-        nameInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitCurrentScore();
-            }
-        });
-    }
+window.skipSubmit = function() {
+    console.log('⏭️ Skipped');
+    hideModal();
+};
+
+function hideModal() {
+    document.getElementById('overlay').classList.remove('active');
+    document.getElementById('name-modal').classList.remove('active');
+    scoreSubmitted = true;
+    pendingScore = 0;
+    
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '💾 Save Score';
+}
+
+document.getElementById('player-name').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') submitCurrentScore();
 });
 
-// Receive messages from parent
-window.addEventListener('message', function(event) {
-    console.log('📨 Message from parent:', event.data);
-    
-    if (event.data.type === 'SCORE_SUBMITTED') {
-        console.log('✅ Parent confirmed score submission');
-    }
-});
+console.log('✅ Bridge ready!');
 </script>
 <!-- END RETROSHAPES BRIDGE -->
 </body></html>
+
 
