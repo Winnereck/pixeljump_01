@@ -1114,135 +1114,79 @@ canvas{
 	
 </script>
 
-
-
 <!-- Add content below the cart here -->
 
-<!-- Nach dem p8_playarea div, vor dem Firebase Script -->
-
-<div id="highscore-button-container" style="text-align:center; margin-top:1rem;">
-    <button id="show-highscores-btn" onclick="toggleHighscores()" 
-            style="padding:0.75rem 2rem; font-size:1rem; background:#4af626; color:#000; border:2px solid #fff; cursor:pointer; font-family:monospace; font-weight:bold;">
-        🏆 View Highscores
-    </button>
-</div>
-
-<!-- Highscore Modal -->
-<div id="highscore-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20000; overflow-y:auto;">
-    <div style="max-width:600px; margin:2rem auto; padding:2rem; background:#1a1a1a; border:4px solid #4af626; font-family:monospace; position:relative;">
-        
-        <button onclick="toggleHighscores()" style="position:absolute; top:1rem; right:1rem; background:#666; color:#fff; border:none; padding:0.5rem 1rem; cursor:pointer; font-size:1.2rem;">
-            ✕
-        </button>
-        
-        <h2 style="color:#4af626; text-align:center; margin:0 0 2rem 0; font-size:2rem; text-shadow:0 0 10px #4af626;">
-            🏆 TOP 10 HIGHSCORES
-        </h2>
-        
-        <div id="highscore-loading" style="text-align:center; color:#888; padding:2rem;">
-            Loading scores...
-        </div>
-        
-        <div id="highscore-list" style="display:none;">
-            <!-- Scores werden hier eingefügt -->
-        </div>
-        
-        <div style="text-align:center; margin-top:2rem;">
-            <button onclick="refreshHighscores()" style="padding:0.5rem 1.5rem; background:#333; color:#fff; border:2px solid #666; cursor:pointer; font-family:monospace;">
-                🔄 Refresh
-            </button>
-        </div>
-    </div>
-</div>
-
-<style>
-/* Highscore Entry Style */
-.highscore-entry {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    background: #0a0a0a;
-    border: 2px solid #333;
-    color: #fff;
-}
-
-.highscore-entry.top-1 {
-    background: #1a1a00;
-    border-color: #ffd700;
-}
-
-.highscore-entry.top-2 {
-    background: #1a1a1a;
-    border-color: #c0c0c0;
-}
-
-.highscore-entry.top-3 {
-    background: #1a0a00;
-    border-color: #cd7f32;
-}
-
-.highscore-rank {
-    font-weight: bold;
-    width: 3rem;
-}
-
-.highscore-name {
-    flex: 1;
-    text-align: left;
-}
-
-.highscore-score {
-    font-weight: bold;
-    color: #4af626;
-}
-
-/* Mobile Responsive */
-@media (max-width: 600px) {
-    #highscore-overlay > div {
-        margin: 1rem;
-        padding: 1.5rem;
-    }
-    
-    .highscore-entry {
-        padding: 0.5rem;
-        font-size: 0.9rem;
-    }
-}
-</style>
-
-
 </div> <!-- body_0 -->
+
 <!-- ============================================ -->
 <!-- RETROSHAPES HIGHSCORE BRIDGE -->
 <!-- ============================================ -->
 <!-- Firebase Config -->
 <script src="./firebase-config.js"></script>
 
-<!-- Name Input Modal -->
+<!-- Game Over Modal mit integriertem Highscore -->
 <div id="overlay"></div>
-<div id="name-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1a1a1a; border:4px solid #fff; padding:2rem; z-index:10000; text-align:center; max-width:90vw; box-sizing:border-box; font-family:monospace;">
-    <h2 style="color:#fff; margin:0 0 1rem 0; font-size:1.8rem;">GAME OVER!</h2>
-    <p style="color:#fff; font-size:1.5rem; margin:1rem 0;">Score: <span id="final-score">0</span></p>
+
+<div id="name-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1a1a1a; border:4px solid #fff; padding:1.5rem; z-index:50000; text-align:center; max-width:90vw; max-height:90vh; overflow-y:auto; box-sizing:border-box; font-family:monospace;">
     
-    <div style="margin:1.5rem 0;">
-        <p style="color:#888; font-size:0.9rem; margin-bottom:0.5rem;">Want to save your score?</p>
-        <input 
-            type="text" 
-            id="player-name" 
-            placeholder="Your Name (optional)" 
-            maxlength="20" 
-            value=""
-            style="padding:0.5rem; font-size:1rem; width:200px; max-width:100%; margin-bottom:1rem; background:#000; color:#fff; border:2px solid #fff; font-family:monospace; box-sizing:border-box;">
+    <!-- Game Over View -->
+    <div id="game-over-view">
+        <h2 style="color:#fff; margin:0 0 1rem 0; font-size:1.8rem;">GAME OVER!</h2>
+        <p style="color:#fff; font-size:1.5rem; margin:1rem 0;">Score: <span id="final-score">0</span></p>
+        
+        <div style="margin:1.5rem 0;">
+            <p style="color:#888; font-size:0.9rem; margin-bottom:0.5rem;">Save your score?</p>
+            <input 
+                type="text" 
+                id="player-name" 
+                placeholder="Your Name" 
+                maxlength="20" 
+                value=""
+                style="padding:0.75rem; font-size:16px; width:100%; max-width:250px; margin-bottom:1rem; background:#000; color:#fff; border:2px solid #fff; font-family:monospace; box-sizing:border-box;">
+        </div>
+        
+        <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:1.5rem;">
+            <button id="submit-btn" onclick="submitCurrentScore()" 
+                    style="padding:1rem 2rem; font-size:1.1rem; background:#4af626; color:#000; border:2px solid #4af626; cursor:pointer; font-family:monospace; font-weight:bold; width:100%; touch-action:manipulation;">
+                💾 Save Score
+            </button>
+            
+            <button onclick="showHighscores()" 
+                    style="padding:1rem 2rem; font-size:1.1rem; background:#333; color:#fff; border:2px solid #666; cursor:pointer; font-family:monospace; width:100%; touch-action:manipulation;">
+                🏆 View Highscores
+            </button>
+            
+            <button onclick="skipSubmit()" 
+                    style="padding:1rem 2rem; font-size:1.1rem; background:#666; color:#fff; border:2px solid #888; cursor:pointer; font-family:monospace; width:100%; touch-action:manipulation;">
+                ↻ Play Again
+            </button>
+        </div>
     </div>
     
-    <div style="display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; margin-top:1rem;">
-        <button id="submit-btn" onclick="submitCurrentScore()" style="padding:0.75rem 2rem; font-size:1rem; background:#4af626; color:#000; border:none; cursor:pointer; font-family:monospace; font-weight:bold;">
-            💾 Save Score
-        </button>
-        <button onclick="skipSubmit()" style="padding:0.75rem 2rem; font-size:1rem; background:#666; color:#fff; border:none; cursor:pointer; font-family:monospace;">
-            ↻ Play Again
-        </button>
+    <!-- Highscore View -->
+    <div id="highscore-view" style="display:none;">
+        <h2 style="color:#4af626; margin:0 0 1.5rem 0; font-size:1.8rem; text-shadow:0 0 10px #4af626;">
+            🏆 TOP 10
+        </h2>
+        
+        <div id="highscore-loading" style="text-align:center; color:#888; padding:2rem; min-height:200px;">
+            Loading scores...
+        </div>
+        
+        <div id="highscore-list" style="display:none; max-height:400px; overflow-y:auto;">
+            <!-- Scores here -->
+        </div>
+        
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+            <button onclick="backToGameOver()" 
+                    style="flex:1; padding:1rem; background:#666; color:#fff; border:2px solid #888; cursor:pointer; font-family:monospace; touch-action:manipulation;">
+                ← Back
+            </button>
+            <button onclick="refreshHighscores()" 
+                    style="flex:1; padding:1rem; background:#333; color:#fff; border:2px solid #666; cursor:pointer; font-family:monospace; touch-action:manipulation;">
+                🔄 Refresh
+            </button>
+        </div>
     </div>
 </div>
 
@@ -1254,8 +1198,8 @@ canvas{
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 9999;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 49999;
 }
 
 #overlay.active {
@@ -1268,39 +1212,100 @@ canvas{
 
 #name-modal.active {
     display: block !important;
-    z-index: 10001;
+    z-index: 50000 !important;
 }
 
-/* Mobile Responsive */
+/* Highscore Entries */
+.highscore-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #0a0a0a;
+    border: 2px solid #333;
+    color: #fff;
+}
+
+.highscore-entry.top-1 {
+    background: linear-gradient(135deg, #1a1600 0%, #0a0a0a 100%);
+    border-color: #ffd700;
+}
+
+.highscore-entry.top-2 {
+    background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+    border-color: #c0c0c0;
+}
+
+.highscore-entry.top-3 {
+    background: linear-gradient(135deg, #1a0a00 0%, #0a0a0a 100%);
+    border-color: #cd7f32;
+}
+
+.highscore-rank {
+    font-weight: bold;
+    width: 3rem;
+    font-size: 1.1rem;
+}
+
+.highscore-name {
+    flex: 1;
+    text-align: left;
+    padding: 0 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.highscore-score {
+    font-weight: bold;
+    color: #4af626;
+    font-size: 1.1rem;
+}
+
+/* Mobile Optimizations */
 @media (max-width: 600px) {
     #name-modal {
-        padding: 1.5rem;
-        max-width: 95vw;
+        padding: 1rem;
+        max-height: 85vh;
     }
     
     #name-modal h2 {
         font-size: 1.5rem;
     }
     
-    #name-modal input {
-        width: 100%;
+    .highscore-entry {
+        padding: 0.6rem;
+        font-size: 0.9rem;
     }
     
     #name-modal button {
-        padding: 0.75rem 1.5rem;
-        font-size: 0.9rem;
+        font-size: 1rem !important;
+        padding: 0.9rem 1.5rem !important;
+        min-height: 48px;
     }
+}
+
+body.modal-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
 }
 </style>
 
 <script>
+// ============================================
+// GAME BRIDGE & HIGHSCORE SYSTEM
+// ============================================
+
 let pendingScore = 0;
-let isInIframe = window.parent !== window;
 let lastGameState = "";
 let scoreSubmitted = false;
+let highscoresCache = [];
 
-console.log('🎮 Game Bridge loaded. In iframe:', isInIframe);
+console.log('🎮 Game Bridge loaded');
 
+// Monitor Game Over
 function checkGameOver() {
     if (typeof pico8_gpio === 'undefined' || !pico8_gpio) return;
     
@@ -1314,14 +1319,7 @@ function checkGameOver() {
         pendingScore = currentScore;
         
         console.log('🎮 Game Over! Score:', pendingScore);
-        
-        document.getElementById('final-score').textContent = pendingScore;
-        document.getElementById('overlay').classList.add('active');
-        document.getElementById('name-modal').classList.add('active');
-        
-        const nameInput = document.getElementById('player-name');
-        nameInput.value = '';
-        setTimeout(() => nameInput.focus(), 100);
+        showGameOverModal();
     }
     
     if (gameState === 0) {
@@ -1332,6 +1330,25 @@ function checkGameOver() {
 
 setInterval(checkGameOver, 100);
 
+// Show Game Over Modal
+function showGameOverModal() {
+    document.getElementById('final-score').textContent = pendingScore;
+    document.getElementById('game-over-view').style.display = 'block';
+    document.getElementById('highscore-view').style.display = 'none';
+    document.getElementById('overlay').classList.add('active');
+    document.getElementById('name-modal').classList.add('active');
+    document.body.classList.add('modal-open');
+    
+    const nameInput = document.getElementById('player-name');
+    nameInput.value = '';
+    
+    // Don't auto-focus on mobile
+    if (window.innerWidth > 600) {
+        setTimeout(() => nameInput.focus(), 100);
+    }
+}
+
+// Submit Score
 window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
     const playerName = nameInput.value.trim();
@@ -1339,9 +1356,15 @@ window.submitCurrentScore = async function() {
     
     console.log('📤 Submitting:', finalName, pendingScore);
     
+    // Close keyboard on mobile
+    nameInput.blur();
+    
     const submitBtn = document.getElementById('submit-btn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '⏳ Saving...';
+    
+    // Wait for keyboard to close
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     if (typeof submitScoreToFirebase === 'function') {
         const result = await submitScoreToFirebase(finalName, pendingScore);
@@ -1349,7 +1372,11 @@ window.submitCurrentScore = async function() {
         if (result.success) {
             console.log('✅ Saved!');
             submitBtn.innerHTML = '✅ Saved!';
-            setTimeout(() => hideModal(), 1500);
+            
+            // Auto-show highscores
+            setTimeout(() => {
+                showHighscores();
+            }, 1000);
         } else {
             console.error('❌ Failed:', result.error);
             submitBtn.disabled = false;
@@ -1360,47 +1387,30 @@ window.submitCurrentScore = async function() {
         console.error('❌ Firebase not loaded!');
         submitBtn.disabled = false;
         submitBtn.innerHTML = '💾 Save Score';
+        alert('Firebase not ready');
     }
 };
 
+// Skip Submit
 window.skipSubmit = function() {
     console.log('⏭️ Skipped');
     hideModal();
 };
 
-function hideModal() {
-    document.getElementById('overlay').classList.remove('active');
-    document.getElementById('name-modal').classList.remove('active');
-    scoreSubmitted = true;
-    pendingScore = 0;
-    
-    const submitBtn = document.getElementById('submit-btn');
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '💾 Save Score';
-}
+// Show Highscores
+window.showHighscores = async function() {
+    document.getElementById('game-over-view').style.display = 'none';
+    document.getElementById('highscore-view').style.display = 'block';
+    await loadHighscores();
+};
 
-document.getElementById('player-name').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') submitCurrentScore();
-});
+// Back to Game Over
+window.backToGameOver = function() {
+    document.getElementById('highscore-view').style.display = 'none';
+    document.getElementById('game-over-view').style.display = 'block';
+};
 
-console.log('✅ Bridge ready!');
-
-	// Highscore Modal Functions
-let highscoresCache = [];
-let highscoresModalOpen = false;
-
-async function toggleHighscores() {
-    const overlay = document.getElementById('highscore-overlay');
-    highscoresModalOpen = !highscoresModalOpen;
-    
-    if (highscoresModalOpen) {
-        overlay.style.display = 'block';
-        await loadHighscores();
-    } else {
-        overlay.style.display = 'none';
-    }
-}
-
+// Load Highscores
 async function loadHighscores() {
     const loadingEl = document.getElementById('highscore-loading');
     const listEl = document.getElementById('highscore-list');
@@ -1417,10 +1427,11 @@ async function loadHighscores() {
         }
     } catch (error) {
         console.error('Failed to load highscores:', error);
-        loadingEl.innerHTML = '<span style="color:#f44;">Failed to load scores</span>';
+        loadingEl.innerHTML = '<span style="color:#f44;">Failed to load</span>';
     }
 }
 
+// Display Highscores
 function displayHighscores() {
     const loadingEl = document.getElementById('highscore-loading');
     const listEl = document.getElementById('highscore-list');
@@ -1429,7 +1440,7 @@ function displayHighscores() {
     listEl.style.display = 'block';
     
     if (highscoresCache.length === 0) {
-        listEl.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">No scores yet. Be the first!</p>';
+        listEl.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">No scores yet.<br>Be the first!</p>';
         return;
     }
     
@@ -1451,17 +1462,44 @@ function displayHighscores() {
     listEl.innerHTML = html;
 }
 
+// Refresh Highscores
+window.refreshHighscores = async function() {
+    await loadHighscores();
+};
+
+// Hide Modal
+function hideModal() {
+    document.getElementById('overlay').classList.remove('active');
+    document.getElementById('name-modal').classList.remove('active');
+    document.body.classList.remove('modal-open');
+    scoreSubmitted = true;
+    pendingScore = 0;
+    
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '💾 Save Score';
+}
+
+// Escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-async function refreshHighscores() {
-    await loadHighscores();
-}
+// Enter key
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById('player-name');
+    if (nameInput) {
+        nameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitCurrentScore();
+            }
+        });
+    }
+});
 
-// Auto-load highscores on page load (after 2 seconds)
+// Preload highscores
 setTimeout(() => {
     if (typeof getHighscores === 'function') {
         getHighscores(10).then(scores => {
@@ -1470,9 +1508,13 @@ setTimeout(() => {
         });
     }
 }, 2000);
+
+console.log('✅ Bridge ready!');
 </script>
 <!-- END RETROSHAPES BRIDGE -->
 </body></html>
+</body></html>
+
 
 
 
