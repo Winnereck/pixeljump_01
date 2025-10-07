@@ -1141,55 +1141,48 @@ canvas{
     
     <!-- Game Over View -->
     <div id="game-over-view">
-        <h2 style="color:#ff1c59; margin:0 0 1.5rem 0; font-size:2rem; letter-spacing:2px;">GAME OVER</h2>
-        <p style="color:#fff; font-size:1.2rem; margin:0.5rem 0;">SCORE: <span id="final-score" style="color:#ffec27;">0</span></p>
+        <h2 style="color:#ff1c59; margin:0 0 1rem 0; font-size:1.5rem; letter-spacing:2px;">GAME OVER</h2>
+        <p style="color:#fff; font-size:1rem; margin:0.3rem 0;">SCORE: <span id="final-score" style="color:#ffec27;">0</span></p>
         
-        <div style="margin:2rem 0;">
-            <p style="color:#29adff; font-size:0.9rem; margin-bottom:1rem; letter-spacing:1px;">SAVE YOUR SCORE?</p>
+        <div style="margin:1.5rem 0 1rem 0;">
+            <p style="color:#29adff; font-size:0.75rem; margin-bottom:0.75rem; letter-spacing:1px;">ENTER YOUR NAME:</p>
             <input 
                 type="text" 
                 id="player-name" 
-                placeholder="ENTER NAME" 
-                maxlength="20" 
+                placeholder="PLAYER" 
+                maxlength="12" 
                 value="">
         </div>
         
-        <div style="display:flex; flex-direction:column; gap:1rem; margin-top:2rem;">
-            <button id="submit-btn" onclick="submitCurrentScore()">
-                <span style="font-size:1.2rem;">▶</span> SAVE SCORE
-            </button>
-            
-            <button onclick="showHighscores()" style="background:#1d2b53; border-color:#29adff;">
-                <span style="font-size:1.2rem;">★</span> HIGHSCORES
-            </button>
-            
-            <button onclick="skipSubmit()" style="background:#5f574f; border-color:#c2c3c7;">
-                <span style="font-size:1.2rem;">↻</span> PLAY AGAIN
-            </button>
+        <div style="margin-top:1.5rem; text-align:left; font-size:0.9rem;">
+            <div class="menu-item" data-index="0" onclick="submitCurrentScore()">
+                <span class="menu-cursor">▶</span> SAVE SCORE
+            </div>
+            <div class="menu-item" data-index="1" onclick="showHighscores()">
+                <span class="menu-cursor">▶</span> VIEW SCORES
+            </div>
+            <div class="menu-item" data-index="2" onclick="skipSubmit()">
+                <span class="menu-cursor">▶</span> PLAY AGAIN
+            </div>
         </div>
     </div>
     
     <!-- Highscore View -->
     <div id="highscore-view" style="display:none;">
-        <h2 style="color:#ffec27; margin:0 0 2rem 0; font-size:2rem; letter-spacing:2px; text-shadow:2px 2px 0px #ff6b00;">
+        <h2 style="color:#ffec27; margin:0 0 1.5rem 0; font-size:1.5rem; letter-spacing:2px;">
             ★ TOP 10 ★
         </h2>
         
-        <div id="highscore-loading" style="text-align:center; color:#29adff; padding:3rem; min-height:200px; font-size:1.2rem;">
+        <div id="highscore-loading" style="text-align:center; color:#29adff; padding:2rem; min-height:150px; font-size:0.9rem;">
             LOADING...
         </div>
         
-        <div id="highscore-list" style="display:none; max-height:400px; overflow-y:auto;">
+        <div id="highscore-list" style="display:none; max-height:300px; overflow-y:auto;">
             <!-- Scores here -->
         </div>
         
-        <div style="display:flex; gap:1rem; margin-top:2rem;">
-            <button onclick="backToGameOver()" style="flex:1; background:#5f574f; border-color:#c2c3c7;">
-                ← BACK
-            </button>
-            <button onclick="refreshHighscores()" style="flex:1; background:#1d2b53; border-color:#29adff;">
-                ↻ REFRESH
-            </button>
+        <div style="margin-top:1.5rem; text-align:center; font-size:0.85rem; color:#5f574f;">
+            <p>❎/🅾️ BACK</p>
         </div>
     </div>
 </div>
@@ -1201,6 +1194,15 @@ html, body {
     -webkit-text-size-adjust: 100%;
 }
 
+/* Touch Controls - HIGHEST Z-INDEX */
+#touch_controls_gfx,
+#touch_controls_background,
+#controls_right_panel,
+#controls_left_panel {
+    z-index: 99999999 !important;
+    pointer-events: auto !important;
+}
+
 #overlay {
     display: none;
     position: fixed;
@@ -1208,8 +1210,8 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 999999;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999990;
 }
 
 #overlay.active {
@@ -1223,17 +1225,16 @@ html, body {
     left: 50%;
     transform: translate(-50%, -50%);
     background: #000;
-    border: 4px solid #fff;
-    padding: 2rem;
-    z-index: 9999999;
+    border: 3px solid #fff;
+    padding: 1.5rem;
+    z-index: 9999995;
     text-align: center;
-    width: 90%;
-    max-width: 500px;
-    max-height: 85vh;
+    width: 85%;
+    max-width: 400px;
+    max-height: 80vh;
     overflow-y: auto;
     box-sizing: border-box;
     font-family: 'Silkscreen', 'Courier New', monospace;
-    box-shadow: 0 0 0 2px #000, 0 0 20px rgba(255, 107, 0, 0.5);
 }
 
 #name-modal.active {
@@ -1241,13 +1242,13 @@ html, body {
 }
 
 #name-modal input {
-    padding: 0.75rem;
-    font-size: 16px;
+    padding: 0.5rem;
+    font-size: 14px;
     width: 100%;
-    max-width: 280px;
+    max-width: 200px;
     background: #1d2b53;
     color: #fff;
-    border: 3px solid #29adff;
+    border: 2px solid #29adff;
     font-family: 'Silkscreen', 'Courier New', monospace;
     box-sizing: border-box;
     text-align: center;
@@ -1265,55 +1266,47 @@ html, body {
     background: #000;
 }
 
-#name-modal button {
-    padding: 1rem 2rem;
-    font-size: 1rem;
-    background: #ff6b00;
+/* Menu Items (Pico-8 Style) */
+.menu-item {
+    padding: 0.5rem 0.75rem;
+    margin: 0.25rem 0;
     color: #fff;
-    border: 3px solid #ff6b00;
     cursor: pointer;
-    font-family: 'Silkscreen', 'Courier New', monospace;
-    font-weight: bold;
-    width: 100%;
-    touch-action: manipulation;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    position: relative;
     transition: all 0.1s;
-    box-shadow: 0 4px 0 #ab4e00;
+    letter-spacing: 1px;
 }
 
-#name-modal button:hover:not(:disabled) {
-    background: #ff9500;
-    border-color: #ff9500;
+.menu-item .menu-cursor {
+    display: inline-block;
+    width: 1.5rem;
+    color: transparent;
+    transition: color 0.1s;
 }
 
-#name-modal button:active:not(:disabled) {
-    transform: translateY(4px);
-    box-shadow: 0 0 0 #ab4e00;
+.menu-item.selected .menu-cursor {
+    color: #ffec27;
 }
 
-#name-modal button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.menu-item:hover {
+    color: #ffec27;
 }
 
-/* Highscore Entries */
+/* Highscore Entries - Compact */
 .highscore-entry {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.3rem;
     background: #1d2b53;
-    border: 2px solid #29adff;
+    border: 1px solid #29adff;
     color: #fff;
+    font-size: 0.85rem;
 }
 
 .highscore-entry.top-1 {
     background: #2b1500;
     border-color: #ffec27;
-    box-shadow: 0 0 10px rgba(255, 236, 39, 0.3);
 }
 
 .highscore-entry.top-2 {
@@ -1328,8 +1321,8 @@ html, body {
 
 .highscore-rank {
     font-weight: bold;
-    width: 4rem;
-    font-size: 1.2rem;
+    width: 2.5rem;
+    font-size: 0.9rem;
     color: #ffec27;
 }
 
@@ -1346,48 +1339,44 @@ html, body {
 .highscore-score {
     font-weight: bold;
     color: #ff6b00;
-    font-size: 1.2rem;
+    font-size: 0.9rem;
 }
 
 /* Mobile Optimizations */
 @media (max-width: 600px) {
     #name-modal {
-        padding: 1.5rem;
-        width: 95%;
-        max-height: 90vh;
+        padding: 1.25rem;
+        width: 90%;
+        max-height: 85vh;
     }
     
     #name-modal h2 {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
+    }
+    
+    .menu-item {
+        font-size: 0.85rem;
+        padding: 0.6rem 0.75rem;
     }
     
     .highscore-entry {
-        padding: 0.6rem;
-        font-size: 0.85rem;
-    }
-    
-    #name-modal button {
-        font-size: 0.9rem !important;
-        padding: 0.9rem 1.5rem !important;
-        min-height: 52px;
+        padding: 0.5rem;
+        font-size: 0.75rem;
     }
     
     .highscore-rank {
-        width: 3rem;
-        font-size: 1rem;
+        width: 2rem;
+        font-size: 0.8rem;
     }
     
     .highscore-score {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
 }
 
 /* Prevent body scroll */
 body.modal-open {
     overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
 }
 
 /* Loading animation */
@@ -1400,7 +1389,6 @@ body.modal-open {
     animation: blink 1s infinite;
 }
 </style>
-
 <script>
 // ============================================
 // GAME BRIDGE & HIGHSCORE SYSTEM mit PICO-8 CONTROLS
@@ -1496,16 +1484,14 @@ setInterval(checkMenuControls, 50); // Check every 50ms
 
 // Update visual selection
 function updateMenuSelection() {
-    const buttons = document.querySelectorAll('#game-over-view button');
-    buttons.forEach((btn, index) => {
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach((item, index) => {
         if (index === menuIndex) {
-            btn.style.borderColor = '#ffec27';
-            btn.style.boxShadow = '0 4px 0 #ab4e00, 0 0 20px rgba(255, 236, 39, 0.5)';
+            item.classList.add('selected');
+            item.style.color = '#ffec27';
         } else {
-            if (index === 0) btn.style.borderColor = '#ff6b00';
-            else if (index === 1) btn.style.borderColor = '#29adff';
-            else btn.style.borderColor = '#c2c3c7';
-            btn.style.boxShadow = '0 4px 0 #ab4e00';
+            item.classList.remove('selected');
+            item.style.color = '#fff';
         }
     });
 }
@@ -1726,6 +1712,7 @@ console.log('🎮 Use ↑↓ to navigate, O/X to select');
 <!-- END RETROSHAPES BRIDGE -->
 </body></html>
 </body></html>
+
 
 
 
