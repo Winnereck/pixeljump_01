@@ -1166,11 +1166,39 @@ canvas{
     background: rgba(0, 0, 0, 0.8);
     z-index: 9999;
 }
+
 #overlay.active {
     display: block;
 }
+
+#name-modal {
+    display: none;
+}
+
 #name-modal.active {
-    display: block;
+    display: block !important;
+    z-index: 10001;
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+    #name-modal {
+        padding: 1.5rem;
+        max-width: 95vw;
+    }
+    
+    #name-modal h2 {
+        font-size: 1.5rem;
+    }
+    
+    #name-modal input {
+        width: 100%;
+    }
+    
+    #name-modal button {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
 }
 </style>
 
@@ -1268,5 +1296,6 @@ console.log('✅ Bridge ready!');
 </script>
 <!-- END RETROSHAPES BRIDGE -->
 </body></html>
+
 
 
