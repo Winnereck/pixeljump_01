@@ -1118,7 +1118,98 @@ canvas{
 
 <!-- Add content below the cart here -->
 
+<!-- Nach dem p8_playarea div, vor dem Firebase Script -->
 
+<div id="highscore-button-container" style="text-align:center; margin-top:1rem;">
+    <button id="show-highscores-btn" onclick="toggleHighscores()" 
+            style="padding:0.75rem 2rem; font-size:1rem; background:#4af626; color:#000; border:2px solid #fff; cursor:pointer; font-family:monospace; font-weight:bold;">
+        🏆 View Highscores
+    </button>
+</div>
+
+<!-- Highscore Modal -->
+<div id="highscore-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20000; overflow-y:auto;">
+    <div style="max-width:600px; margin:2rem auto; padding:2rem; background:#1a1a1a; border:4px solid #4af626; font-family:monospace; position:relative;">
+        
+        <button onclick="toggleHighscores()" style="position:absolute; top:1rem; right:1rem; background:#666; color:#fff; border:none; padding:0.5rem 1rem; cursor:pointer; font-size:1.2rem;">
+            ✕
+        </button>
+        
+        <h2 style="color:#4af626; text-align:center; margin:0 0 2rem 0; font-size:2rem; text-shadow:0 0 10px #4af626;">
+            🏆 TOP 10 HIGHSCORES
+        </h2>
+        
+        <div id="highscore-loading" style="text-align:center; color:#888; padding:2rem;">
+            Loading scores...
+        </div>
+        
+        <div id="highscore-list" style="display:none;">
+            <!-- Scores werden hier eingefügt -->
+        </div>
+        
+        <div style="text-align:center; margin-top:2rem;">
+            <button onclick="refreshHighscores()" style="padding:0.5rem 1.5rem; background:#333; color:#fff; border:2px solid #666; cursor:pointer; font-family:monospace;">
+                🔄 Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Highscore Entry Style */
+.highscore-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #0a0a0a;
+    border: 2px solid #333;
+    color: #fff;
+}
+
+.highscore-entry.top-1 {
+    background: #1a1a00;
+    border-color: #ffd700;
+}
+
+.highscore-entry.top-2 {
+    background: #1a1a1a;
+    border-color: #c0c0c0;
+}
+
+.highscore-entry.top-3 {
+    background: #1a0a00;
+    border-color: #cd7f32;
+}
+
+.highscore-rank {
+    font-weight: bold;
+    width: 3rem;
+}
+
+.highscore-name {
+    flex: 1;
+    text-align: left;
+}
+
+.highscore-score {
+    font-weight: bold;
+    color: #4af626;
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+    #highscore-overlay > div {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .highscore-entry {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
 
 
 </div> <!-- body_0 -->
@@ -1293,9 +1384,96 @@ document.getElementById('player-name').addEventListener('keypress', function(e) 
 });
 
 console.log('✅ Bridge ready!');
+
+	// Highscore Modal Functions
+let highscoresCache = [];
+let highscoresModalOpen = false;
+
+async function toggleHighscores() {
+    const overlay = document.getElementById('highscore-overlay');
+    highscoresModalOpen = !highscoresModalOpen;
+    
+    if (highscoresModalOpen) {
+        overlay.style.display = 'block';
+        await loadHighscores();
+    } else {
+        overlay.style.display = 'none';
+    }
+}
+
+async function loadHighscores() {
+    const loadingEl = document.getElementById('highscore-loading');
+    const listEl = document.getElementById('highscore-list');
+    
+    loadingEl.style.display = 'block';
+    listEl.style.display = 'none';
+    
+    try {
+        if (typeof getHighscores === 'function') {
+            highscoresCache = await getHighscores(10);
+            displayHighscores();
+        } else {
+            loadingEl.innerHTML = '<span style="color:#f44;">Firebase not ready</span>';
+        }
+    } catch (error) {
+        console.error('Failed to load highscores:', error);
+        loadingEl.innerHTML = '<span style="color:#f44;">Failed to load scores</span>';
+    }
+}
+
+function displayHighscores() {
+    const loadingEl = document.getElementById('highscore-loading');
+    const listEl = document.getElementById('highscore-list');
+    
+    loadingEl.style.display = 'none';
+    listEl.style.display = 'block';
+    
+    if (highscoresCache.length === 0) {
+        listEl.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">No scores yet. Be the first!</p>';
+        return;
+    }
+    
+    let html = '';
+    highscoresCache.forEach((entry, index) => {
+        const rank = index + 1;
+        const rankClass = rank === 1 ? 'top-1' : rank === 2 ? 'top-2' : rank === 3 ? 'top-3' : '';
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+        
+        html += `
+            <div class="highscore-entry ${rankClass}">
+                <span class="highscore-rank">${medal} #${rank}</span>
+                <span class="highscore-name">${escapeHtml(entry.name)}</span>
+                <span class="highscore-score">${entry.score}</span>
+            </div>
+        `;
+    });
+    
+    listEl.innerHTML = html;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function refreshHighscores() {
+    await loadHighscores();
+}
+
+// Auto-load highscores on page load (after 2 seconds)
+setTimeout(() => {
+    if (typeof getHighscores === 'function') {
+        getHighscores(10).then(scores => {
+            highscoresCache = scores;
+            console.log('📊 Highscores preloaded:', scores.length);
+        });
+    }
+}, 2000);
 </script>
 <!-- END RETROSHAPES BRIDGE -->
 </body></html>
+
 
 
 
