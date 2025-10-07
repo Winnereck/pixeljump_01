@@ -1403,7 +1403,7 @@ body.modal-open {
 
 <script>
 // ============================================
-// GAME BRIDGE & HIGHSCORE SYSTEM
+// GAME BRIDGE & HIGHSCORE SYSTEM mit PICO-8 CONTROLS
 // ============================================
 
 let pendingScore = 0;
@@ -1411,7 +1411,12 @@ let lastGameState = "";
 let scoreSubmitted = false;
 let highscoresCache = [];
 
-console.log('🎮 Game Bridge loaded');
+// Menu State
+let menuIndex = 0; // 0=Save, 1=View Scores, 2=Play Again
+let lastButtonState = 0;
+let inHighscoreView = false;
+
+console.log('🎮 Game Bridge loaded with Pico-8 controls');
 
 // Monitor Game Over
 function checkGameOver() {
@@ -1438,6 +1443,94 @@ function checkGameOver() {
 
 setInterval(checkGameOver, 100);
 
+// Pico-8 Button Reading
+function checkMenuControls() {
+    if (!document.getElementById('name-modal').classList.contains('active')) {
+        return; // Modal not open
+    }
+    
+    if (typeof pico8_buttons === 'undefined' || !pico8_buttons) return;
+    
+    const buttons = pico8_buttons[0];
+    
+    // Detect button press (not hold)
+    if (buttons !== lastButtonState) {
+        const pressed = buttons & ~lastButtonState; // New presses only
+        
+        if (!inHighscoreView) {
+            // Game Over Menu
+            const menuItems = 3;
+            
+            // UP (0x4)
+            if (pressed & 0x4) {
+                menuIndex = (menuIndex - 1 + menuItems) % menuItems;
+                updateMenuSelection();
+                playMenuSound();
+            }
+            
+            // DOWN (0x8)
+            if (pressed & 0x8) {
+                menuIndex = (menuIndex + 1) % menuItems;
+                updateMenuSelection();
+                playMenuSound();
+            }
+            
+            // O Button (0x10) or X Button (0x20) - Select
+            if (pressed & 0x10 || pressed & 0x20) {
+                selectMenuItem();
+                playSelectSound();
+            }
+        } else {
+            // Highscore View - only O/X to go back
+            if (pressed & 0x10 || pressed & 0x20) {
+                backToGameOver();
+                playSelectSound();
+            }
+        }
+    }
+    
+    lastButtonState = buttons;
+}
+
+setInterval(checkMenuControls, 50); // Check every 50ms
+
+// Update visual selection
+function updateMenuSelection() {
+    const buttons = document.querySelectorAll('#game-over-view button');
+    buttons.forEach((btn, index) => {
+        if (index === menuIndex) {
+            btn.style.borderColor = '#ffec27';
+            btn.style.boxShadow = '0 4px 0 #ab4e00, 0 0 20px rgba(255, 236, 39, 0.5)';
+        } else {
+            if (index === 0) btn.style.borderColor = '#ff6b00';
+            else if (index === 1) btn.style.borderColor = '#29adff';
+            else btn.style.borderColor = '#c2c3c7';
+            btn.style.boxShadow = '0 4px 0 #ab4e00';
+        }
+    });
+}
+
+// Select current menu item
+function selectMenuItem() {
+    if (menuIndex === 0) {
+        submitCurrentScore();
+    } else if (menuIndex === 1) {
+        showHighscores();
+    } else if (menuIndex === 2) {
+        skipSubmit();
+    }
+}
+
+// Sound effects (optional - uses console beep)
+function playMenuSound() {
+    // Could use Web Audio API for actual Pico-8 style blips
+    console.log('🔊 Menu move');
+}
+
+function playSelectSound() {
+    console.log('🔊 Menu select');
+}
+
 // Show Game Over Modal
 function showGameOverModal() {
     document.getElementById('final-score').textContent = pendingScore;
@@ -1446,6 +1539,10 @@ function showGameOverModal() {
     document.getElementById('overlay').classList.add('active');
     document.getElementById('name-modal').classList.add('active');
     document.body.classList.add('modal-open');
+    
+    menuIndex = 0;
+    inHighscoreView = false;
+    updateMenuSelection();
     
     const nameInput = document.getElementById('player-name');
     nameInput.value = '';
@@ -1469,7 +1566,7 @@ window.submitCurrentScore = async function() {
     
     const submitBtn = document.getElementById('submit-btn');
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '⏳ Saving...';
+    submitBtn.innerHTML = '<span style="font-size:1.2rem;">⏳</span> SAVING...';
     
     // Wait for keyboard to close
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -1479,7 +1576,7 @@ window.submitCurrentScore = async function() {
         
         if (result.success) {
             console.log('✅ Saved!');
-            submitBtn.innerHTML = '✅ Saved!';
+            submitBtn.innerHTML = '<span style="font-size:1.2rem;">✓</span> SAVED!';
             
             // Auto-show highscores
             setTimeout(() => {
@@ -1488,13 +1585,13 @@ window.submitCurrentScore = async function() {
         } else {
             console.error('❌ Failed:', result.error);
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '💾 Save Score';
+            submitBtn.innerHTML = '<span style="font-size:1.2rem;">▶</span> SAVE SCORE';
             alert('Failed: ' + result.error);
         }
     } else {
         console.error('❌ Firebase not loaded!');
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '💾 Save Score';
+        submitBtn.innerHTML = '<span style="font-size:1.2rem;">▶</span> SAVE SCORE';
         alert('Firebase not ready');
     }
 };
@@ -1509,6 +1606,7 @@ window.skipSubmit = function() {
 window.showHighscores = async function() {
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
+    inHighscoreView = true;
     await loadHighscores();
 };
 
@@ -1516,6 +1614,9 @@ window.showHighscores = async function() {
 window.backToGameOver = function() {
     document.getElementById('highscore-view').style.display = 'none';
     document.getElementById('game-over-view').style.display = 'block';
+    inHighscoreView = false;
+    menuIndex = 0;
+    updateMenuSelection();
 };
 
 // Load Highscores
@@ -1531,11 +1632,11 @@ async function loadHighscores() {
             highscoresCache = await getHighscores(10);
             displayHighscores();
         } else {
-            loadingEl.innerHTML = '<span style="color:#f44;">Firebase not ready</span>';
+            loadingEl.innerHTML = '<span style="color:#ff1c59;">FIREBASE ERROR</span>';
         }
     } catch (error) {
         console.error('Failed to load highscores:', error);
-        loadingEl.innerHTML = '<span style="color:#f44;">Failed to load</span>';
+        loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>';
     }
 }
 
@@ -1548,7 +1649,7 @@ function displayHighscores() {
     listEl.style.display = 'block';
     
     if (highscoresCache.length === 0) {
-        listEl.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">No scores yet.<br>Be the first!</p>';
+        listEl.innerHTML = '<p style="text-align:center; color:#29adff; padding:2rem; letter-spacing:1px;">NO SCORES YET<br><br>BE THE FIRST!</p>';
         return;
     }
     
@@ -1556,12 +1657,12 @@ function displayHighscores() {
     highscoresCache.forEach((entry, index) => {
         const rank = index + 1;
         const rankClass = rank === 1 ? 'top-1' : rank === 2 ? 'top-2' : rank === 3 ? 'top-3' : '';
-        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+        const medal = rank === 1 ? '♔' : rank === 2 ? '♕' : rank === 3 ? '♖' : '·';
         
         html += `
             <div class="highscore-entry ${rankClass}">
-                <span class="highscore-rank">${medal} #${rank}</span>
-                <span class="highscore-name">${escapeHtml(entry.name)}</span>
+                <span class="highscore-rank">${medal} ${rank}</span>
+                <span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span>
                 <span class="highscore-score">${entry.score}</span>
             </div>
         `;
@@ -1582,10 +1683,12 @@ function hideModal() {
     document.body.classList.remove('modal-open');
     scoreSubmitted = true;
     pendingScore = 0;
+    menuIndex = 0;
+    inHighscoreView = false;
     
     const submitBtn = document.getElementById('submit-btn');
     submitBtn.disabled = false;
-    submitBtn.innerHTML = '💾 Save Score';
+    submitBtn.innerHTML = '<span style="font-size:1.2rem;">▶</span> SAVE SCORE';
 }
 
 // Escape HTML
@@ -1617,11 +1720,13 @@ setTimeout(() => {
     }
 }, 2000);
 
-console.log('✅ Bridge ready!');
+console.log('✅ Bridge ready with Pico-8 controls!');
+console.log('🎮 Use ↑↓ to navigate, O/X to select');
 </script>
 <!-- END RETROSHAPES BRIDGE -->
 </body></html>
 </body></html>
+
 
 
 
