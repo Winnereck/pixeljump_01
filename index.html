@@ -1387,10 +1387,9 @@ body.modal-open {
 
 <script>
 // ============================================
-// GAME BRIDGE & HIGHSCORE SYSTEM mit GPIO TRIGGERS
+// GAME BRIDGE - KOMPLETTE NEUSTRUKTURIERUNG
 // ============================================
 
-// GPIO Pin Definitionen
 const GPIO_GAME_STATE = 0;
 const GPIO_SCORE_HIGH = 1;
 const GPIO_SCORE_LOW = 2;
@@ -1406,14 +1405,18 @@ let highscoresCache = [];
 let menuIndex = 0;
 let lastButtonState = 0;
 let inHighscoreView = false;
+let modalJustOpened = false;
 
-console.log('🎮 Game Bridge loaded with GPIO triggers');
+console.log('🎮 Game Bridge loaded');
 
-// Monitor Game Over & Modal Triggers
+// WICHTIG: Button Input Management
+let capturedButtons = 0;
+let framesSinceModalOpen = 0;
+
+// Monitor GPIO Triggers
 function checkGameOver() {
     if (typeof pico8_gpio === 'undefined' || !pico8_gpio) return;
     
-    // NULL CHECK für DOM Element
     const modal = document.getElementById('name-modal');
     if (!modal) return;
     
@@ -1422,18 +1425,15 @@ function checkGameOver() {
     let scoreLow = pico8_gpio[GPIO_SCORE_LOW] || 0;
     let currentScore = (scoreHigh * 256) + scoreLow;
     
-    // Check Modal Triggers
     let triggerSubmit = pico8_gpio[GPIO_MODAL_SUBMIT];
     let triggerLeaderboard = pico8_gpio[GPIO_MODAL_LEADERBOARD];
     
-    // Submit Score Modal
     if (triggerSubmit === 1 && !modal.classList.contains('active')) {
         pendingScore = currentScore;
         showSubmitModal();
         pico8_gpio[GPIO_MODAL_SUBMIT] = 0;
     }
     
-    // Leaderboard Modal
     if (triggerLeaderboard === 1 && !modal.classList.contains('active')) {
         showLeaderboardModal();
         pico8_gpio[GPIO_MODAL_LEADERBOARD] = 0;
@@ -1445,55 +1445,72 @@ function checkGameOver() {
     }
 }
 
-// Pico-8 Button Reading
+// NEUE Button Control Logic
 function checkMenuControls() {
     const modal = document.getElementById('name-modal');
     if (!modal) return;
     
     const modalActive = modal.classList.contains('active');
-    if (!modalActive) return;
     
-    if (typeof pico8_buttons !== 'undefined' && pico8_buttons) {
-        const buttons = pico8_buttons[0];
+    if (typeof pico8_buttons === 'undefined' || !pico8_buttons) return;
+    
+    // LESE die Buttons BEVOR wir sie ändern
+    const currentButtons = pico8_buttons[0];
+    
+    if (modalActive) {
+        // Modal ist offen - BLOCKIERE Game Input
         pico8_buttons[0] = 0;
         
-        if (buttons !== lastButtonState) {
-            const pressed = buttons & ~lastButtonState;
+        // Debounce: Ignoriere Inputs kurz nach Modal-Öffnung
+        if (modalJustOpened) {
+            framesSinceModalOpen++;
+            if (framesSinceModalOpen > 10) { // ~166ms bei 60fps
+                modalJustOpened = false;
+            }
+            return;
+        }
+        
+        // Erkenne NEUE Button Presses (Rising Edge Detection)
+        const pressed = currentButtons & ~lastButtonState;
+        
+        if (!inHighscoreView) {
+            // === SUBMIT MODAL MENU ===
+            const menuItems = 3;
             
-            if (!inHighscoreView) {
-                const menuItems = 3;
-                
-                if (pressed & 0x4) {
-                    menuIndex = (menuIndex - 1 + menuItems) % menuItems;
-                    updateMenuSelection();
-                }
-                
-                if (pressed & 0x8) {
-                    menuIndex = (menuIndex + 1) % menuItems;
-                    updateMenuSelection();
-                }
-                
-                if (pressed & 0x10 || pressed & 0x20) {
-                    selectMenuItem();
-                }
-            } else {
-                const listEl = document.getElementById('highscore-list');
-                
-                if (pressed & 0x4) {
-                    if (listEl) listEl.scrollTop -= 40;
-                }
-                
-                if (pressed & 0x8) {
-                    if (listEl) listEl.scrollTop += 40;
-                }
-                
-                if (pressed & 0x10 || pressed & 0x20) {
-                    hideModal();
-                }
+            if (pressed & 0x4) { // UP
+                menuIndex = (menuIndex - 1 + menuItems) % menuItems;
+                updateMenuSelection();
+            }
+            
+            if (pressed & 0x8) { // DOWN
+                menuIndex = (menuIndex + 1) % menuItems;
+                updateMenuSelection();
+            }
+            
+            if (pressed & 0x10 || pressed & 0x20) { // O/X
+                selectMenuItem();
+            }
+        } else {
+            // === LEADERBOARD VIEW ===
+            const listEl = document.getElementById('highscore-list');
+            
+            if (pressed & 0x4) { // UP - Scroll
+                if (listEl) listEl.scrollTop -= 50;
+            }
+            
+            if (pressed & 0x8) { // DOWN - Scroll
+                if (listEl) listEl.scrollTop += 50;
+            }
+            
+            if (pressed & 0x10 || pressed & 0x20) { // O/X - Close
+                hideModal();
             }
         }
         
-        lastButtonState = buttons;
+        lastButtonState = currentButtons;
+    } else {
+        // Modal ist GESCHLOSSEN - Game darf Input bekommen
+        lastButtonState = 0; // Reset
     }
 }
 
@@ -1518,7 +1535,7 @@ function selectMenuItem() {
     else if (menuIndex === 2) skipSubmit();
 }
 
-// Show Submit Modal - KEINE TOUCH CONTROLS AUSBLENDEN
+// Show Submit Modal
 function showSubmitModal() {
     console.log('📝 Opening Submit Modal');
 
@@ -1533,21 +1550,20 @@ function showSubmitModal() {
     nameInput.value = '';
     menuIndex = 0;
     inHighscoreView = false;
+    modalJustOpened = true;
+    framesSinceModalOpen = 0;
+    lastButtonState = 0;
     updateMenuSelection();
     
-    // Tastatur auf Mobile nur wenn groß genug
+    // Keyboard nur auf Desktop
     if (window.innerWidth > 600) {
         setTimeout(() => nameInput.focus(), 100);
     }
 }
 
-// Show Leaderboard Modal - KEINE TOUCH CONTROLS AUSBLENDEN
+// Show Leaderboard Modal
 function showLeaderboardModal() {
     console.log('🏆 Opening Leaderboard Modal');
-
-    // HIER DIE STEUERUNG AUSBLENDEN
-    const touchControls = document.getElementById('touch_controls_gfx');
-    if (touchControls) touchControls.style.display = 'none';
 
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
@@ -1555,6 +1571,9 @@ function showLeaderboardModal() {
     document.getElementById('name-modal').classList.add('active');
     document.body.classList.add('modal-open');
     inHighscoreView = true;
+    modalJustOpened = true;
+    framesSinceModalOpen = 0;
+    lastButtonState = 0;
     loadHighscores();
 }
 
@@ -1603,6 +1622,8 @@ window.showHighscores = async function() {
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
     inHighscoreView = true;
+    modalJustOpened = true;
+    framesSinceModalOpen = 0;
     await loadHighscores();
 };
 
@@ -1663,14 +1684,12 @@ function hideModal() {
     document.getElementById('overlay').classList.remove('active');
     document.getElementById('name-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
-	const touchControls = document.getElementById('touch_controls_gfx');
-    if (touchControls) touchControls.style.display = 'table'; // oder 'block', je nach ursprünglichem display-Typ
-
-    scoreSubmitted = true;
+    
     scoreSubmitted = true;
     pendingScore = 0;
     menuIndex = 0;
     inHighscoreView = false;
+    lastButtonState = 0;
     
     const menuItems = document.querySelectorAll('.menu-item');
     if (menuItems[0]) {
@@ -1685,13 +1704,13 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Start intervals AFTER DOM is ready
+// Start intervals AFTER DOM ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ DOM Ready - Starting intervals');
+    console.log('✅ DOM Ready');
     setInterval(checkGameOver, 100);
-    setInterval(checkMenuControls, 50);
+    setInterval(checkMenuControls, 16); // ~60fps
     
-    // Enter key handler
+    // Enter key
     const nameInput = document.getElementById('player-name');
     if (nameInput) {
         nameInput.addEventListener('keypress', function(e) {
@@ -1704,22 +1723,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof getHighscores === 'function') {
             getHighscores(10).then(scores => {
                 highscoresCache = scores;
-                console.log('📊 Highscores preloaded:', scores.length);
+                console.log('📊 Preloaded:', scores.length);
             });
         }
     }, 2000);
 });
 
-console.log('✅ Bridge ready with GPIO triggers!');
-console.log('🎮 Pico-8 triggers Submit/Leaderboard via GPIO pins 3 & 4');
+console.log('✅ Bridge ready!');
 </script>
 <!-- END RETROSHAPES BRIDGE -->
 
-</body></html>
-
-
 </div> <!-- body_0 -->
-</body></html>
+</body>
+</html>
+
 
 
 
