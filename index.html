@@ -1216,8 +1216,8 @@ html, body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #ff0000;  /* ROT zum Testen - sichtbar! */
-    border: 5px solid #ffff00;  /* GELBER Rand - sehr sichtbar! */
+    background: #000;
+    border: 3px solid #fff;
     padding: 1.5rem;
     z-index: 1000000000 !important;  /* HÖCHSTER Z-Index */
     text-align: center;
@@ -1446,71 +1446,51 @@ function checkGameOver() {
 }
 
 // NEUE Button Control Logic
+// ERSETZE checkMenuControls() mit dieser SUPER SIMPLE Version:
 function checkMenuControls() {
     const modal = document.getElementById('name-modal');
     if (!modal) return;
     
     const modalActive = modal.classList.contains('active');
+    if (!modalActive) return;
     
     if (typeof pico8_buttons === 'undefined' || !pico8_buttons) return;
     
-    // LESE die Buttons BEVOR wir sie ändern
-    const currentButtons = pico8_buttons[0];
+    const buttons = pico8_buttons[0];
     
-    if (modalActive) {
-        // Modal ist offen - BLOCKIERE Game Input
-        pico8_buttons[0] = 0;
-        
-        // Debounce: Ignoriere Inputs kurz nach Modal-Öffnung
-        if (modalJustOpened) {
-            framesSinceModalOpen++;
-            if (framesSinceModalOpen > 10) { // ~166ms bei 60fps
-                modalJustOpened = false;
-            }
-            return;
-        }
-        
-        // Erkenne NEUE Button Presses (Rising Edge Detection)
-        const pressed = currentButtons & ~lastButtonState;
-        
+    // Block game SOFORT
+    pico8_buttons[0] = 0;
+    
+    // Warte 1 Frame
+    if (lastButtonState === buttons) return;
+    lastButtonState = buttons;
+    
+    // UP
+    if (buttons & 0x4) {
+        console.log('⬆️ UP pressed');
         if (!inHighscoreView) {
-            // === SUBMIT MODAL MENU ===
-            const menuItems = 3;
-            
-            if (pressed & 0x4) { // UP
-                menuIndex = (menuIndex - 1 + menuItems) % menuItems;
-                updateMenuSelection();
-            }
-            
-            if (pressed & 0x8) { // DOWN
-                menuIndex = (menuIndex + 1) % menuItems;
-                updateMenuSelection();
-            }
-            
-            if (pressed & 0x10 || pressed & 0x20) { // O/X
-                selectMenuItem();
-            }
-        } else {
-            // === LEADERBOARD VIEW ===
-            const listEl = document.getElementById('highscore-list');
-            
-            if (pressed & 0x4) { // UP - Scroll
-                if (listEl) listEl.scrollTop -= 50;
-            }
-            
-            if (pressed & 0x8) { // DOWN - Scroll
-                if (listEl) listEl.scrollTop += 50;
-            }
-            
-            if (pressed & 0x10 || pressed & 0x20) { // O/X - Close
-                hideModal();
-            }
+            menuIndex = (menuIndex - 1 + 3) % 3;
+            updateMenuSelection();
         }
-        
-        lastButtonState = currentButtons;
-    } else {
-        // Modal ist GESCHLOSSEN - Game darf Input bekommen
-        lastButtonState = 0; // Reset
+    }
+    
+    // DOWN
+    if (buttons & 0x8) {
+        console.log('⬇️ DOWN pressed');
+        if (!inHighscoreView) {
+            menuIndex = (menuIndex + 1) % 3;
+            updateMenuSelection();
+        }
+    }
+    
+    // O/X
+    if ((buttons & 0x10) || (buttons & 0x20)) {
+        console.log('🅾️/❎ Button pressed');
+        if (!inHighscoreView) {
+            selectMenuItem();
+        } else {
+            hideModal();
+        }
     }
 }
 
@@ -1784,6 +1764,7 @@ function forceShowModal() {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
