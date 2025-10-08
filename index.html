@@ -1184,15 +1184,15 @@ html, body {
     -webkit-text-size-adjust: 100%;
 }
 
-/* Touch Controls - Standard Z-Index */
+/* Touch Controls - NIEDRIGER als Modal */
 #touch_controls_gfx,
 #controls_right_panel,
 #controls_left_panel {
     z-index: 100 !important;
-    pointer-events: auto !important;
+    pointer-events: none !important;  /* WICHTIG: Nur Visuals, keine Clicks */
 }
 
-/* Modal ÜBER Touch Controls */
+/* Modal ÜBER ALLEM */
 #overlay {
     display: none;
     position: fixed;
@@ -1200,8 +1200,8 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 10000 !important;  /* Höher als Touch Controls */
+    background: rgba(0, 0, 0, 0.95);  /* DUNKLER für bessere Sichtbarkeit */
+    z-index: 999999999 !important;  /* HÖHER als Touch Controls */
     pointer-events: none;
 }
 
@@ -1216,10 +1216,10 @@ html, body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #000;
-    border: 3px solid #fff;
+    background: #ff0000;  /* ROT zum Testen - sichtbar! */
+    border: 5px solid #ffff00;  /* GELBER Rand - sehr sichtbar! */
     padding: 1.5rem;
-    z-index: 10001 !important;  /* Höher als Overlay */
+    z-index: 1000000000 !important;  /* HÖCHSTER Z-Index */
     text-align: center;
     width: 85%;
     max-width: 400px;
@@ -1733,9 +1733,58 @@ console.log('✅ Bridge ready!');
 </script>
 <!-- END RETROSHAPES BRIDGE -->
 
+	<!-- TEST BUTTON - Zum Debuggen -->
+<button onclick="forceShowModal()" style="
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 2000000000;
+    background: #ff00ff;
+    color: #fff;
+    padding: 10px;
+    border: 2px solid #fff;
+    font-size: 16px;
+    cursor: pointer;">
+    TEST MODAL
+</button>
+
+<script>
+// FORCE SHOW Modal
+function forceShowModal() {
+    console.log('🧪 FORCE SHOWING MODAL');
+    const modal = document.getElementById('name-modal');
+    const overlay = document.getElementById('overlay');
+    
+    if (modal) {
+        modal.classList.add('active');
+        modal.style.display = 'block';
+        modal.style.background = '#ff0000';  // ROT
+        console.log('✅ Modal active');
+    } else {
+        console.log('❌ Modal not found');
+        alert('Modal not found!');
+    }
+    
+    if (overlay) {
+        overlay.classList.add('active');
+        overlay.style.display = 'block';
+        console.log('✅ Overlay active');
+    } else {
+        console.log('❌ Overlay not found');
+    }
+    
+    document.body.classList.add('modal-open');
+    
+    // Zeige Info
+    alert('Modal Status:\nModal: ' + (modal ? 'FOUND' : 'NOT FOUND') + 
+          '\nOverlay: ' + (overlay ? 'FOUND' : 'NOT FOUND'));
+}
+</script>
+
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
