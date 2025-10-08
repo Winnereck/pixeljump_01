@@ -1368,6 +1368,9 @@ html, body {
 /* Prevent body scroll */
 body.modal-open {
     overflow: hidden;
+    position: fixed; /* Hinzufügen */
+    width: 100%;     /* Hinzufügen */
+    height: 100%;    /* Hinzufügen */
 }
 
 /* Loading animation */
@@ -1517,6 +1520,11 @@ function selectMenuItem() {
 // Show Submit Modal
 function showSubmitModal() {
     console.log('📝 Opening Submit Modal');
+    
+    // HIER DIE STEUERUNG AUSBLENDEN
+    const touchControls = document.getElementById('touch_controls_gfx');
+    if (touchControls) touchControls.style.display = 'none';
+
     document.getElementById('final-score').textContent = pendingScore;
     document.getElementById('game-over-view').style.display = 'block';
     document.getElementById('highscore-view').style.display = 'none';
@@ -1530,14 +1538,17 @@ function showSubmitModal() {
     inHighscoreView = false;
     updateMenuSelection();
     
-    if (window.innerWidth > 600) {
-        setTimeout(() => nameInput.focus(), 100);
-    }
+    setTimeout(() => nameInput.focus(), 100);
 }
 
 // Show Leaderboard Modal
 function showLeaderboardModal() {
     console.log('🏆 Opening Leaderboard Modal');
+
+    // HIER DIE STEUERUNG AUSBLENDEN
+    const touchControls = document.getElementById('touch_controls_gfx');
+    if (touchControls) touchControls.style.display = 'none';
+
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
     document.getElementById('overlay').classList.add('active');
@@ -1652,6 +1663,10 @@ function hideModal() {
     document.getElementById('overlay').classList.remove('active');
     document.getElementById('name-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
+	const touchControls = document.getElementById('touch_controls_gfx');
+    if (touchControls) touchControls.style.display = 'table'; // oder 'block', je nach ursprünglichem display-Typ
+
+    scoreSubmitted = true;
     scoreSubmitted = true;
     pendingScore = 0;
     menuIndex = 0;
@@ -1705,5 +1720,6 @@ console.log('🎮 Pico-8 triggers Submit/Leaderboard via GPIO pins 3 & 4');
 
 </div> <!-- body_0 -->
 </body></html>
+
 
 
