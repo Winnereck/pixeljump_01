@@ -1614,37 +1614,41 @@ window.showHighscores = async function() {
     };
 };
 
-// Lädt die nächste "Seite" an Scores
+// Lädt die nächste "Seite" an Scores (abgesicherte Version)
 async function loadMoreHighscores() {
     if (isLoadingMore || allScoresLoaded) return;
 
     isLoadingMore = true;
     const loadingEl = document.getElementById('highscore-loading');
     loadingEl.style.display = 'block';
-    
+    loadingEl.textContent = 'LOADING...'; // Text zurücksetzen
+
     try {
         if (typeof getHighscoresPaged === 'function') {
-            const result = await getHighscoresPaged(15, lastVisibleDoc); // Lade 15 Scores
-            displayHighscores(result.scores, true); // true = anhängen
+            const result = await getHighscoresPaged(15, lastVisibleDoc);
+            displayHighscores(result.scores, true);
             
-            lastVisibleDoc = result.lastDoc; // Den "Cursor" für die nächste Seite speichern
+            lastVisibleDoc = result.lastDoc;
             if (!lastVisibleDoc) {
-                allScoresLoaded = true; // Keine weiteren Dokumente vorhanden
-                loadingEl.innerHTML = '· END OF LIST ·';
+                allScoresLoaded = true;
+                loadingEl.textContent = '· END OF LIST ·';
             }
         } else {
-            loadingEl.innerHTML = '<span style="color:#ff1c59;">FIREBASE ERROR</span>';
+            // Dieser Fall tritt ein, wenn die Funktion in firebase-config.js fehlt
+            console.error("Funktion getHighscoresPaged ist nicht definiert!");
+            loadingEl.innerHTML = '<span style="color:#ff1c59;">CONFIG ERROR</span>';
             allScoresLoaded = true;
         }
     } catch (error) {
         console.error('Failed to load more highscores:', error);
         loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>';
         allScoresLoaded = true;
-    }
-    
-    isLoadingMore = false;
-    if(!allScoresLoaded) {
-      loadingEl.style.display = 'none';
+    } finally {
+        // Dieser Block wird IMMER ausgeführt, egal ob es einen Fehler gab oder nicht.
+        isLoadingMore = false;
+        if (!allScoresLoaded) {
+            loadingEl.style.display = 'none';
+        }
     }
 }
 
@@ -1689,6 +1693,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
