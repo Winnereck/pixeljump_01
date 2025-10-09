@@ -120,38 +120,6 @@ async function submitScoreToFirebase(name, score) {
   }
 }
 
-// Get Highscores von Firebase
-async function getHighscores(limit = 10) {
-  if (!firebaseReady) {
-    console.warn('⚠️ Firebase not ready, returning empty scores');
-    return [];
-  }
-  
-  try {
-    const snapshot = await db.collection('highscores')
-      .orderBy('score', 'desc')
-      .limit(limit)
-      .get();
-    
-    const scores = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      scores.push({
-        name: data.name,
-        score: data.score,
-        timestamp: data.timestamp
-      });
-    });
-    
-    console.log('📊 Fetched scores:', scores.length);
-    return scores;
-    
-  } catch (error) {
-    console.error('❌ Error fetching scores:', error);
-    return [];
-  }
-}
-
 // Funktion zum Laden von paginierten Highscores
 
 async function getHighscoresPaged(limit, startAfterDoc = null) {
