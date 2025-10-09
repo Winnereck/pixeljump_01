@@ -153,15 +153,20 @@ async function getHighscores(limit = 10) {
 }
 
 // Funktion zum Laden von paginierten Highscores
+
 async function getHighscoresPaged(limit, startAfterDoc = null) {
     try {
-        const db = firebase.firestore();
-        // Ersetze "scores" mit dem Namen deiner Firestore Collection, falls er anders ist.
-        let query = db.collection("scores")
-            .orderBy("score", "desc") // Sortiere nach score, absteigend
+        // Stelle sicher, dass 'db' initialisiert ist
+        if (!db) {
+            console.error("Firestore DB ist nicht initialisiert.");
+            return { scores: [], lastDoc: null };
+        }
+
+        // KORREKTUR HIER: von "scores" zu "highscores" geändert
+        let query = db.collection("highscores")
+            .orderBy("score", "desc")
             .limit(limit);
 
-        // Wenn ein 'startAfterDoc' übergeben wird, starte die neue Abfrage nach diesem Dokument
         if (startAfterDoc) {
             query = query.startAfter(startAfterDoc);
         }
@@ -173,15 +178,12 @@ async function getHighscoresPaged(limit, startAfterDoc = null) {
             scores.push({ id: doc.id, ...doc.data() });
         });
         
-        // Das letzte Dokument der aktuellen Seite speichern.
-        // Das ist der "Cursor" für die nächste Abfrage.
         const lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
         return { scores, lastDoc };
 
     } catch (error) {
         console.error("Error getting paged highscores: ", error);
-        // Im Fehlerfall ein leeres Ergebnis zurückgeben, damit die App nicht abstürzt
         return { scores: [], lastDoc: null };
     }
 }
