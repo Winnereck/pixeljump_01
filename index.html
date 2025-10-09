@@ -213,14 +213,6 @@
 	// step 0 down 1 drag 2 up (not used)
 	function pico8_buttons_event(e, step)
 	{
-		// ================= HIER IST DIE LÖSUNG =================
-		// Prüfe, ob das Modal aktiv ist. Wenn ja, ignoriere den Touch-Input für PICO-8.
-		const modal = document.getElementById('name-modal');
-		if (modal && modal.classList.contains('active')) {
-			return; // Beende die Funktion hier und überlasse dem Browser die Kontrolle.
-		}
-		// =======================================================
-
 		if (!p8_is_running) return;
 	
 		pico8_buttons[0] = 0;
@@ -1122,8 +1114,6 @@ canvas{
 	
 </script>
 
-
-
 <!-- Add content below the cart here -->
 
 <!-- ============================================ -->
@@ -1706,6 +1696,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
