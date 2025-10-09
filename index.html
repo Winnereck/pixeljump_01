@@ -1132,6 +1132,22 @@ canvas{
 <!-- Firebase Config -->
 <script src="./firebase-config.js"></script>
 
+<div id="debug-box" style="
+    position: fixed;
+    bottom: 5px;
+    left: 5px;
+    background-color: rgba(0,0,0,0.7);
+    color: #00ff00;
+    padding: 5px;
+    font-family: monospace;
+    font-size: 12px;
+    border: 1px solid #00ff00;
+    z-index: 9999999999;
+    pointer-events: none;">
+    Debug-Info wird geladen...
+</div>
+
+
 <!-- Game Over Modal mit integriertem Highscore -->
 <div id="overlay"></div>
 
@@ -1394,6 +1410,24 @@ body.modal-open {
 </style>
 
 <script>
+
+	// ============================================
+// DIAGNOSE-SKRIPT
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    const debugBox = document.getElementById('debug-box');
+    if (debugBox) {
+        setInterval(function() {
+            let gpio_status = "nicht definiert";
+            // Prüfen, ob pico8_gpio existiert und einen Wert hat
+            if (typeof pico8_gpio !== 'undefined' && pico8_gpio && typeof pico8_gpio[3] !== 'undefined') {
+                gpio_status = pico8_gpio[3];
+            }
+            debugBox.textContent = 'GPIO[3] Status: ' + gpio_status;
+        }, 100); // Alle 100ms aktualisieren
+    }
+});
+	
 // GPIO Pin Definitionen
 const GPIO_GAME_STATE = 0;
 const GPIO_SCORE_HIGH = 1;
@@ -1716,6 +1750,7 @@ function forceShowModal() {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
