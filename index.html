@@ -1139,6 +1139,7 @@ canvas{
     
     <!-- Game Over View -->
     <div id="game-over-view">
+        <div class="close-button" onclick="hideModal()">×</div>
         <h2 style="color:#ff1c59; margin:0 0 1rem 0; font-size:1.5rem; letter-spacing:2px;">GAME OVER</h2>
         <p style="color:#fff; font-size:1rem; margin:0.3rem 0;">SCORE: <span id="final-score" style="color:#ffec27;">0</span></p>
         
@@ -1156,34 +1157,22 @@ canvas{
             <div class="menu-item" data-index="0" onclick="submitCurrentScore()">
                 <span class="menu-cursor">▶</span> SAVE SCORE
             </div>
-            <div class="menu-item" data-index="1" onclick="showHighscores()">
-                <span class="menu-cursor">▶</span> VIEW SCORES
-            </div>
-            <div class="menu-item" data-index="2" onclick="skipSubmit()">
-                <span class="menu-cursor">▶</span> PLAY AGAIN
-            </div>
         </div>
     </div>
     
-    <!-- Highscore View -->
     <div id="highscore-view" style="display:none;">
+        <div class="close-button" onclick="hideModal()">×</div>
         <h2 style="color:#ffec27; margin:0 0 1.5rem 0; font-size:1.5rem; letter-spacing:2px;">
-            ★ TOP 10 ★
+            ★ HIGHSCORES ★
         </h2>
         
-        <div id="highscore-loading" style="text-align:center; color:#29adff; padding:2rem; min-height:150px; font-size:0.9rem;">
+        <div id="highscore-list" style="display:none; max-height:300px; overflow-y:auto;">
+            </div>
+
+        <div id="highscore-loading" style="text-align:center; color:#29adff; padding:2rem; min-height:50px; font-size:0.9rem;">
             LOADING...
         </div>
-        
-        <div id="highscore-list" style="display:none; max-height:300px; overflow-y:auto;">
-            <!-- Scores here -->
-        </div>
-        
-        <div style="margin-top:1.5rem; text-align:center; font-size:0.85rem; color:#5f574f;">
-            <p>❎/🅾️ BACK</p>
-        </div>
     </div>
-</div>
 
 <style>
 /* Prevent zoom and scrolling */
@@ -1192,6 +1181,24 @@ html, body {
     -webkit-text-size-adjust: 100%;
 }
 
+/* Eltern-Container für korrekte Positionierung des X */
+#game-over-view, #highscore-view {
+    position: relative;
+}
+
+/* Stil für den Schließen-Button */
+.close-button {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-size: 24px;
+    color: #5f574f;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.close-button:hover {
+    color: #fff;
+}
 /* Touch Controls - NIEDRIGER als Modal */
 #touch_controls_gfx,
 #controls_right_panel,
@@ -1422,6 +1429,9 @@ let highscoresCache = [];
 let menuIndex = 0;
 let inHighscoreView = false;
 let modalDebounce = false; // Verhindert sofortige Aktion nach Öffnen
+let isLoadingMore = false;
+let lastVisibleDoc = null; // Speichert den letzten Score für die nächste Abfrage
+let allScoresLoaded = false;
 
 console.log('🎮 Game Bridge initialisiert und wartet auf Spielstart...');
 
@@ -1556,11 +1566,19 @@ window.submitCurrentScore = async function() {
     const saveItem = document.querySelectorAll('.menu-item')[0];
     if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
 
+    // Kurze künstliche Pause, damit der User das "SAVING..." sieht
+    await new Promise(resolve => setTimeout(resolve, 500)); 
+
     if (typeof submitScoreToFirebase === 'function') {
         const result = await submitScoreToFirebase(playerName, pendingScore);
         if (result.success) {
             if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVED!';
-            setTimeout(() => { inHighscoreView = true; showHighscores(); }, 1000);
+            // Nach einer weiteren kurzen Pause das Modal schließen
+            setTimeout(() => {
+                hideModal();
+                // Reset für den nächsten Durchgang
+                if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
+            }, 700); 
         } else {
             if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
             alert('Failed: ' + result.error);
@@ -1570,46 +1588,95 @@ window.submitCurrentScore = async function() {
         alert('Firebase not ready');
     }
 };
-
+	
 window.skipSubmit = function() { hideModal(); };
+// Initialisiert den Highscore-View und lädt die ersten Einträge
 window.showHighscores = async function() {
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
+    
+    // Zustand zurücksetzen für eine neue Ansicht
+    const listEl = document.getElementById('highscore-list');
+    listEl.innerHTML = ''; // Liste leeren
+    lastVisibleDoc = null;
+    allScoresLoaded = false;
     inHighscoreView = true;
-    modalDebounce = true;
-    await loadHighscores();
+    
+    await loadMoreHighscores(); // Erste Ladung
+
+    // Scroll-Listener hinzufügen
+    listEl.onscroll = () => {
+        // Prüfen, ob der User fast am Ende der Liste ist
+        const nearBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 50;
+        if (nearBottom && !isLoadingMore && !allScoresLoaded) {
+            loadMoreHighscores();
+        }
+    };
 };
 
-async function loadHighscores() {
+// Lädt die nächste "Seite" an Scores
+async function loadMoreHighscores() {
+    if (isLoadingMore || allScoresLoaded) return;
+
+    isLoadingMore = true;
     const loadingEl = document.getElementById('highscore-loading');
-    const listEl = document.getElementById('highscore-list');
     loadingEl.style.display = 'block';
-    listEl.style.display = 'none';
+    
     try {
-        if (typeof getHighscores === 'function') {
-            highscoresCache = await getHighscores(10);
-            displayHighscores();
-        } else { loadingEl.innerHTML = '<span style="color:#ff1c59;">FIREBASE ERROR</span>';}
-    } catch (error) { loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>'; }
+        if (typeof getHighscoresPaged === 'function') {
+            const result = await getHighscoresPaged(15, lastVisibleDoc); // Lade 15 Scores
+            displayHighscores(result.scores, true); // true = anhängen
+            
+            lastVisibleDoc = result.lastDoc; // Den "Cursor" für die nächste Seite speichern
+            if (!lastVisibleDoc) {
+                allScoresLoaded = true; // Keine weiteren Dokumente vorhanden
+                loadingEl.innerHTML = '· END OF LIST ·';
+            }
+        } else {
+            loadingEl.innerHTML = '<span style="color:#ff1c59;">FIREBASE ERROR</span>';
+            allScoresLoaded = true;
+        }
+    } catch (error) {
+        console.error('Failed to load more highscores:', error);
+        loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>';
+        allScoresLoaded = true;
+    }
+    
+    isLoadingMore = false;
+    if(!allScoresLoaded) {
+      loadingEl.style.display = 'none';
+    }
 }
 
-function displayHighscores() {
-    const loadingEl = document.getElementById('highscore-loading');
+// Zeigt die Scores an (kann jetzt Scores an die Liste anhängen)
+function displayHighscores(scores, append = false) {
     const listEl = document.getElementById('highscore-list');
-    loadingEl.style.display = 'none';
     listEl.style.display = 'block';
-    if (highscoresCache.length === 0) {
-        listEl.innerHTML = '<p style="text-align:center; color:#29adff;">NO SCORES YET</p>';
+
+    if (!append) {
+        listEl.innerHTML = '';
+    }
+
+    if (scores.length === 0 && !append) {
+        document.getElementById('highscore-loading').textContent = "NO SCORES YET";
         return;
     }
+    
     let html = '';
-    highscoresCache.forEach((entry, index) => {
-        const rank = index + 1;
-        const rankClass = rank <= 3 ? `top-${rank}` : '';
-        const medal = rank === 1 ? '♔' : rank === 2 ? '♕' : rank === 3 ? '♖' : '·';
-        html += `<div class="highscore-entry ${rankClass}"><span class="highscore-rank">${medal} ${rank}</span><span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span><span class="highscore-score">${entry.score}</span></div>`;
+    scores.forEach(entry => {
+        // Die Logik zur Ermittlung des Rangs muss angepasst werden, da wir seitenweise laden
+        // Wir zeigen einfach die sortierten Einträge ohne expliziten Rang
+        const medal = ''; // Ränge sind bei Endless Scroll schwierig, Medaillen ggf. weglassen
+        
+        html += `
+            <div class="highscore-entry">
+                <span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span>
+                <span class="highscore-score">${entry.score}</span>
+            </div>
+        `;
     });
-    listEl.innerHTML = html;
+    
+    listEl.innerHTML += html;
 }
 
 function escapeHtml(text) {
@@ -1622,6 +1689,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
