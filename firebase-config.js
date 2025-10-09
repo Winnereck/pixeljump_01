@@ -1,5 +1,5 @@
 // firebase-config.js
-// Firebase Highscore System for Pixel Jump
+// Firebase Highscore System for Pixel Jump (FINALE, ROBUSTE VERSION)
 
 const firebaseConfig = {
   apiKey: "AIzaSyBlxw4A6HUp3c3ydA1gxQyNfew3VRMuFo8",
@@ -13,107 +13,79 @@ const firebaseConfig = {
 let db = null;
 let firebaseReady = false;
 
-// Device Fingerprint für Spam Prevention
+// Device Fingerprint
 function getDeviceId() {
   let deviceId = localStorage.getItem('pixeljump_device');
-  
   if (!deviceId) {
     deviceId = 'px_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('pixeljump_device', deviceId);
   }
-  
   return deviceId;
 }
 
-// Rate Limiting Check
+// Rate Limiting
 function canSubmitScore() {
-  const lastSubmitKey = 'pixeljump_last_submit';
-  const lastSubmit = localStorage.getItem(lastSubmitKey);
-  
-  if (lastSubmit) {
-    const timeSince = Date.now() - parseInt(lastSubmit);
-    if (timeSince < 10000) { // 10 Sekunden Cooldown
-      console.warn('⏱️ Please wait 10 seconds between submissions');
-      return false;
-    }
+  const lastSubmit = localStorage.getItem('pixeljump_last_submit');
+  if (lastSubmit && (Date.now() - parseInt(lastSubmit) < 10000)) {
+    console.warn('⏱️ Please wait 10 seconds between submissions');
+    return false;
   }
-  
   return true;
 }
 
-// Lade Firebase Scripts
+// Lade Firebase Scripts und gib ein Promise zurück
 function loadFirebase() {
   return new Promise((resolve) => {
     console.log('🔥 Loading Firebase...');
-    
-    const script1 = document.createElement('script');
-    script1.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
-    document.head.appendChild(script1);
+    const scriptApp = document.createElement('script');
+    scriptApp.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+    document.head.appendChild(scriptApp);
 
-    script1.onload = function() {
-      const script2 = document.createElement('script');
-      script2.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
-      document.head.appendChild(script2);
+    scriptApp.onload = () => {
+      const scriptFirestore = document.createElement('script');
+      scriptFirestore.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
+      document.head.appendChild(scriptFirestore);
       
-      script2.onload = function() {
-        console.log('🔥 Firebase scripts loaded');
-        
+      scriptFirestore.onload = () => {
         try {
-          const app = firebase.initializeApp(firebaseConfig);
+          firebase.initializeApp(firebaseConfig);
           db = firebase.firestore();
           firebaseReady = true;
-          
           console.log('✅ Firebase initialized successfully!');
           resolve();
         } catch (error) {
           console.error('❌ Firebase initialization failed:', error);
-          resolve(); // Resolve anyway to not block game
+          resolve();
         }
       };
-      
-      script2.onerror = function() {
-        console.error('❌ Failed to load Firestore script');
-        resolve();
-      };
+      scriptFirestore.onerror = () => { console.error('❌ Failed to load Firestore script'); resolve(); };
     };
-    
-    script1.onerror = function() {
-      console.error('❌ Failed to load Firebase app script');
-      resolve();
-    };
+    scriptApp.onerror = () => { console.error('❌ Failed to load Firebase app script'); resolve(); };
   });
 }
 
+// =========================================================================
+// WICHTIGE ÄNDERUNG: Wir speichern das Promise der Initialisierung
+// =========================================================================
+const firebaseInitializationPromise = loadFirebase();
+
 // Submit Score zu Firebase
 async function submitScoreToFirebase(name, score) {
-  if (!firebaseReady) {
-    console.error('❌ Firebase not ready!');
-    return { success: false, error: 'Firebase not ready' };
-  }
-  
-  // Rate Limiting
-  if (!canSubmitScore()) {
-    return { success: false, error: 'Please wait before submitting again' };
-  }
-  
-  const deviceId = getDeviceId();
+  // Zuerst WARTEN, bis die Initialisierung abgeschlossen ist
+  await firebaseInitializationPromise;
+
+  if (!firebaseReady) return { success: false, error: 'Firebase not ready' };
+  if (!canSubmitScore()) return { success: false, error: 'Please wait' };
   
   try {
-    console.log('📤 Submitting to Firebase:', { name, score, deviceId });
-    
     await db.collection('highscores').add({
       name: name || 'Anonymous',
       score: score,
-      deviceId: deviceId,
+      deviceId: getDeviceId(),
       timestamp: Date.now()
     });
-    
-    // Update last submit time
     localStorage.setItem('pixeljump_last_submit', Date.now().toString());
-    
-    console.log('✅ Score submitted successfully!');
     return { success: true };
-    
   } catch (error) {
     console.error('❌ Firebase submission error:', error);
     return { success: false, error: error.message };
@@ -121,45 +93,38 @@ async function submitScoreToFirebase(name, score) {
 }
 
 // Funktion zum Laden von paginierten Highscores
-
 async function getHighscoresPaged(limit, startAfterDoc = null) {
-    try {
-        // Stelle sicher, dass 'db' initialisiert ist
-        if (!db) {
-            console.error("Firestore DB ist nicht initialisiert.");
-            return { scores: [], lastDoc: null };
-        }
+  // Zuerst WARTEN, bis die Initialisierung abgeschlossen ist
+  await firebaseInitializationPromise;
 
-        // KORREKTUR HIER: von "scores" zu "highscores" geändert
-        let query = db.collection("highscores")
-            .orderBy("score", "desc")
-            .limit(limit);
+  if (!firebaseReady) {
+      console.warn('⚠️ Firebase not ready, returning empty scores');
+      return { scores: [], lastDoc: null };
+  }
+  
+  try {
+    let query = db.collection("highscores")
+        .orderBy("score", "desc")
+        .limit(limit);
 
-        if (startAfterDoc) {
-            query = query.startAfter(startAfterDoc);
-        }
-
-        const snapshot = await query.get();
-
-        const scores = [];
-        snapshot.forEach(doc => {
-            scores.push({ id: doc.id, ...doc.data() });
-        });
-        
-        const lastDoc = snapshot.docs[snapshot.docs.length - 1];
-
-        return { scores, lastDoc };
-
-    } catch (error) {
-        console.error("Error getting paged highscores: ", error);
-        return { scores: [], lastDoc: null };
+    if (startAfterDoc) {
+        query = query.startAfter(startAfterDoc);
     }
+
+    const snapshot = await query.get();
+    const scores = [];
+    snapshot.forEach(doc => {
+        scores.push({ id: doc.id, ...doc.data() });
+    });
+    
+    const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+    return { scores, lastDoc };
+  } catch (error) {
+    console.error("Error getting paged highscores: ", error);
+    return { scores: [], lastDoc: null };
+  }
 }
 
-// Auto-load Firebase when script loads
-loadFirebase();
-
-// Make functions globally available
+// Mache die Funktionen global verfügbar
 window.submitScoreToFirebase = submitScoreToFirebase;
-window.getHighscores = getHighscores;
-window.firebaseReady = () => firebaseReady;
+window.getHighscoresPaged = getHighscoresPaged;
