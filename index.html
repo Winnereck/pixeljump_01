@@ -1119,15 +1119,12 @@ canvas{
 <!-- ============================================ -->
 <!-- RETROSHAPES HIGHSCORE BRIDGE -->
 <!-- ============================================ -->
-<!-- Firebase Config -->
 <script src="./firebase-config.js"></script>
 
-<!-- Game Over Modal mit integriertem Highscore -->
 <div id="overlay"></div>
 
 <div id="name-modal">
     
-    <!-- Game Over View -->
     <div id="game-over-view">
         <div class="close-button" onclick="hideModal()">×</div>
         <h2 style="color:#ff1c59; margin:0 0 1rem 0; font-size:1.5rem; letter-spacing:2px;">GAME OVER</h2>
@@ -1159,18 +1156,13 @@ canvas{
         <div id="highscore-list" style="display:none; max-height:300px; overflow-y:auto;">
             </div>
 
-        <div id="highscore-loading" style="text-align:center; color:#29adff; padding:2rem; min-height:50px; font-size:0.9rem;">
+        <div id="highscore-loading" style="text-align:center; color:#29adff; padding:1rem; min-height:20px; font-size:0.9rem;">
             LOADING...
         </div>
     </div>
+</div>
 
 <style>
-/* Prevent zoom and scrolling */
-html, body {
-    touch-action: pan-x pan-y;
-    -webkit-text-size-adjust: 100%;
-}
-
 /* Eltern-Container für korrekte Positionierung des X */
 #game-over-view, #highscore-view {
     position: relative;
@@ -1189,13 +1181,6 @@ html, body {
 .close-button:hover {
     color: #fff;
 }
-/* Touch Controls - NIEDRIGER als Modal */
-#touch_controls_gfx,
-#controls_right_panel,
-#controls_left_panel {
-    z-index: 100 !important;
-    pointer-events: none !important;  /* WICHTIG: Nur Visuals, keine Clicks */
-}
 
 /* Modal ÜBER ALLEM */
 #overlay {
@@ -1205,8 +1190,8 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.95);  /* DUNKLER für bessere Sichtbarkeit */
-    z-index: 999999999 !important;  /* HÖHER als Touch Controls */
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 999999999 !important;
     pointer-events: none;
 }
 
@@ -1224,12 +1209,10 @@ html, body {
     background: #000;
     border: 3px solid #fff;
     padding: 1.5rem;
-    z-index: 1000000000 !important;  /* HÖCHSTER Z-Index */
+    z-index: 1000000000 !important;
     text-align: center;
     width: 85%;
     max-width: 400px;
-    max-height: 80vh;
-    overflow-y: auto;
     box-sizing: border-box;
     font-family: 'Silkscreen', 'Courier New', monospace;
 }
@@ -1253,23 +1236,12 @@ html, body {
     text-transform: uppercase;
 }
 
-#name-modal input::placeholder {
-    color: #5f574f;
-}
-
-#name-modal input:focus {
-    outline: none;
-    border-color: #ffec27;
-    background: #000;
-}
-
 /* Menu Items (Pico-8 Style) */
 .menu-item {
     padding: 0.5rem 0.75rem;
     margin: 0.25rem 0;
     color: #fff;
     cursor: pointer;
-    transition: all 0.1s;
     letter-spacing: 1px;
 }
 
@@ -1277,15 +1249,6 @@ html, body {
     display: inline-block;
     width: 1.5rem;
     color: transparent;
-    transition: color 0.1s;
-}
-
-.menu-item.selected .menu-cursor {
-    color: #ffec27;
-}
-
-.menu-item:hover {
-    color: #ffec27;
 }
 
 /* Highscore Entries - Compact */
@@ -1301,28 +1264,6 @@ html, body {
     font-size: 0.85rem;
 }
 
-.highscore-entry.top-1 {
-    background: #2b1500;
-    border-color: #ffec27;
-}
-
-.highscore-entry.top-2 {
-    background: #1d2b53;
-    border-color: #c2c3c7;
-}
-
-.highscore-entry.top-3 {
-    background: #2b1500;
-    border-color: #ff6b00;
-}
-
-.highscore-rank {
-    font-weight: bold;
-    width: 2.5rem;
-    font-size: 0.9rem;
-    color: #ffec27;
-}
-
 .highscore-name {
     flex: 1;
     text-align: left;
@@ -1330,121 +1271,68 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    letter-spacing: 1px;
 }
 
 .highscore-score {
     font-weight: bold;
     color: #ff6b00;
-    font-size: 0.9rem;
-}
-
-/* Mobile Optimizations */
-@media (max-width: 600px) {
-    #name-modal {
-        padding: 1.25rem;
-        width: 90%;
-        max-height: 85vh;
-    }
-    
-    #name-modal h2 {
-        font-size: 1.3rem;
-    }
-    
-    .menu-item {
-        font-size: 0.85rem;
-        padding: 0.6rem 0.75rem;
-    }
-    
-    .highscore-entry {
-        padding: 0.5rem;
-        font-size: 0.75rem;
-    }
-    
-    .highscore-rank {
-        width: 2rem;
-        font-size: 0.8rem;
-    }
-    
-    .highscore-score {
-        font-size: 0.8rem;
-    }
 }
 
 /* Prevent body scroll */
 body.modal-open {
     overflow: hidden;
-    position: fixed; /* Hinzufügen */
-    width: 100%;     /* Hinzufügen */
-    height: 100%;    /* Hinzufügen */
+    position: fixed;
+    width: 100%;
+    height: 100%;
 }
 
-/* Loading animation */
-@keyframes blink {
-    0%, 49% { opacity: 1; }
-    50%, 100% { opacity: 0; }
-}
-
-#highscore-loading {
-    animation: blink 1s infinite;
-}
 </style>
 
 <script>
-
+// ===== DOM-FIX FÜR MOBILE SICHTBARKEIT & SCROLL-PROBLEM =====
 document.addEventListener('DOMContentLoaded', function() {
-    // Finde die UI-Elemente
+    // UI-Elemente an das Ende des <body> verschieben, damit sie über dem PICO-8 Frame liegen
     const overlay = document.getElementById('overlay');
     const nameModal = document.getElementById('name-modal');
-
     if (overlay) document.body.appendChild(overlay);
     if (nameModal) document.body.appendChild(nameModal);
     console.log('✅ Modal-Elemente an das Ende des DOM verschoben.');
 
+    // Scroll-Problem bei mobiler Tastatur beheben
     const nameInput = document.getElementById('player-name');
     if (nameInput) {
-        // Wir lauschen auf das 'blur'-Ereignis. Das wird ausgelöst,
-        // wenn das Eingabefeld den Fokus verliert (z.B. Tastatur wird geschlossen).
         nameInput.addEventListener('blur', () => {
-            // Eine winzige Verzögerung gibt dem Browser Zeit, die Tastatur
-            // komplett auszublenden, bevor wir scrollen.
             setTimeout(() => {
-                // Dieser Befehl sagt der übergeordneten Shopify-Seite,
-                // sie soll ganz nach oben (Position 0, 0) scrollen.
                 window.parent.scrollTo(0, 0);
                 console.log('⬆️ Forcing parent window to scroll to top.');
-            }, 100); // 100 Millisekunden Verzögerung
+            }, 100);
         });
     }
 });
 
 // GPIO Pin Definitionen
-const GPIO_GAME_STATE = 0;
-const GPIO_SCORE_HIGH = 1;
-const GPIO_SCORE_LOW = 2;
 const GPIO_MODAL_SUBMIT = 3;
 const GPIO_MODAL_LEADERBOARD = 4;
+const GPIO_SCORE_HIGH = 1;
+const GPIO_SCORE_LOW = 2;
 
 // Globale Zustandsvariablen
 let pendingScore = 0;
-let highscoresCache = [];
-let menuIndex = 0;
 let inHighscoreView = false;
-let modalDebounce = false; // Verhindert sofortige Aktion nach Öffnen
+let modalDebounce = false;
 let isLoadingMore = false;
-let lastVisibleDoc = null; // Speichert den letzten Score für die nächste Abfrage
+let lastVisibleDoc = null;
 let allScoresLoaded = false;
 
 console.log('🎮 Game Bridge initialisiert und wartet auf Spielstart...');
 
-// Diese Funktion wird erst aufgerufen, wenn PICO-8 garantiert läuft.
+// Bridge erst aktivieren, wenn PICO-8 garantiert läuft
 function initializeGameBridge() {
     console.log('✅ PICO-8 ist gestartet. Bridge wird aktiviert.');
     setInterval(checkGameTriggers, 100);
     setInterval(checkModalControls, 50);
 }
 
-// Erweitere die p8_run_cart Funktion, um den Start der Bridge zu steuern
 if (typeof p8_run_cart === 'function') {
     const original_p8_run_cart = p8_run_cart;
     p8_run_cart = function() {
@@ -1456,22 +1344,16 @@ if (typeof p8_run_cart === 'function') {
 // Prüft die GPIO-Pins auf Anfragen vom Spiel
 function checkGameTriggers() {
     if (typeof pico8_gpio === 'undefined' || !pico8_gpio) return;
-    
     const modal = document.getElementById('name-modal');
     if (!modal || modal.classList.contains('active')) return;
 
-    const triggerSubmit = pico8_gpio[GPIO_MODAL_SUBMIT];
-    const triggerLeaderboard = pico8_gpio[GPIO_MODAL_LEADERBOARD];
-    
-    if (triggerSubmit === 1) {
-        const scoreHigh = pico8_gpio[GPIO_SCORE_HIGH] || 0;
-        const scoreLow = pico8_gpio[GPIO_SCORE_LOW] || 0;
-        pendingScore = (scoreHigh * 256) + scoreLow;
+    if (pico8_gpio[GPIO_MODAL_SUBMIT] === 1) {
+        pendingScore = (pico8_gpio[GPIO_SCORE_HIGH] || 0) * 256 + (pico8_gpio[GPIO_SCORE_LOW] || 0);
         showSubmitModal();
         pico8_gpio[GPIO_MODAL_SUBMIT] = 0;
     }
     
-    if (triggerLeaderboard === 1) {
+    if (pico8_gpio[GPIO_MODAL_LEADERBOARD] === 1) {
         showLeaderboardModal();
         pico8_gpio[GPIO_MODAL_LEADERBOARD] = 0;
     }
@@ -1480,59 +1362,26 @@ function checkGameTriggers() {
 // Liest die PICO-8 Controls und "konsumiert" sie für das Modal
 function checkModalControls() {
     const modal = document.getElementById('name-modal');
-    if (!modal || !modal.classList.contains('active') || typeof pico8_buttons === 'undefined') {
-        return;
-    }
-
+    if (!modal || !modal.classList.contains('active') || typeof pico8_buttons === 'undefined') return;
     if (modalDebounce) {
         modalDebounce = false;
         pico8_buttons[0] = 0;
         return;
     }
-
     const buttons = pico8_buttons[0];
     pico8_buttons[0] = 0; // Input sofort konsumieren!
 
-    if (buttons > 0) {
-        if (!inHighscoreView) {
-            if (buttons & 0x4) { menuIndex = (menuIndex - 1 + 3) % 3; updateMenuSelection(); }
-            if (buttons & 0x8) { menuIndex = (menuIndex + 1) % 3; updateMenuSelection(); }
-            if (buttons & 0x10 || buttons & 0x20) { selectMenuItem(); }
-        } else {
-            if (buttons & 0x10 || buttons & 0x20) { hideModal(); }
-        }
+    if (buttons > 0 && inHighscoreView) {
+        if (buttons & 0x10 || buttons & 0x20) hideModal();
     }
 }
 
-// --- Deine restlichen Hilfsfunktionen ---
-// (Hier werden sie alle zur Vollständigkeit aufgelistet)
-
-function showSubmitModal() {
-    document.getElementById('final-score').textContent = pendingScore;
-    document.getElementById('game-over-view').style.display = 'block';
-    document.getElementById('highscore-view').style.display = 'none';
-    openModal();
-    const nameInput = document.getElementById('player-name');
-    nameInput.value = '';
-    if (!/Mobi|Android/i.test(navigator.userAgent)) {
-       setTimeout(() => nameInput.focus(), 100);
-    }
-}
-
-function showLeaderboardModal() {
-    document.getElementById('game-over-view').style.display = 'none';
-    document.getElementById('highscore-view').style.display = 'block';
-    showHighscores();
-}
-
+// Modal-Hilfsfunktionen
 function openModal() {
     document.getElementById('overlay').classList.add('active');
     document.getElementById('name-modal').classList.add('active');
     document.body.classList.add('modal-open');
-    menuIndex = 0;
-    inHighscoreView = false;
     modalDebounce = true;
-    updateMenuSelection();
 }
 
 function hideModal() {
@@ -1542,42 +1391,38 @@ function hideModal() {
     inHighscoreView = false;
 }
 
-function updateMenuSelection() {
-    const menuItems = document.querySelectorAll('.menu-item');
-    menuItems.forEach((item, index) => {
-        if (index === menuIndex) {
-            item.classList.add('selected');
-            item.style.color = '#ffec27';
-        } else {
-            item.classList.remove('selected');
-            item.style.color = '#fff';
-        }
-    });
+function showSubmitModal() {
+    document.getElementById('final-score').textContent = pendingScore;
+    document.getElementById('game-over-view').style.display = 'block';
+    document.getElementById('highscore-view').style.display = 'none';
+    inHighscoreView = false;
+    openModal();
+    const nameInput = document.getElementById('player-name');
+    nameInput.value = '';
+    if (!/Mobi|Android/i.test(navigator.userAgent)) {
+       setTimeout(() => nameInput.focus(), 100);
+    }
 }
 
-function selectMenuItem() {
-    if (menuIndex === 0) submitCurrentScore();
-    else if (menuIndex === 1) showHighscores();
-    else if (menuIndex === 2) skipSubmit();
+function showLeaderboardModal() {
+    inHighscoreView = true;
+    showHighscores();
 }
 
 window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
     const playerName = nameInput.value.trim() || 'Anonymous';
-    const saveItem = document.querySelectorAll('.menu-item')[0];
+    const saveItem = document.querySelector('#game-over-view .menu-item');
     if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
 
-    // Kurze künstliche Pause, damit der User das "SAVING..." sieht
     await new Promise(resolve => setTimeout(resolve, 500)); 
 
     if (typeof submitScoreToFirebase === 'function') {
         const result = await submitScoreToFirebase(playerName, pendingScore);
         if (result.success) {
             if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVED!';
-            // Nach einer weiteren kurzen Pause das Modal schließen
             setTimeout(() => {
                 hideModal();
-                // Reset für den nächsten Durchgang
                 if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
             }, 700); 
         } else {
@@ -1590,25 +1435,18 @@ window.submitCurrentScore = async function() {
     }
 };
 	
-window.skipSubmit = function() { hideModal(); };
-// Initialisiert den Highscore-View und lädt die ersten Einträge
 window.showHighscores = async function() {
-    // Zuerst das Modal öffnen und UI vorbereiten
     openModal();
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
-    
-    // Zustand für den Endless Scroll zurücksetzen
     const listEl = document.getElementById('highscore-list');
-    listEl.innerHTML = ''; // Liste leeren
+    listEl.innerHTML = '';
     lastVisibleDoc = null;
     allScoresLoaded = false;
     inHighscoreView = true;
     
-    // Erste Ladung der Scores anstoßen
     await loadMoreHighscores();
 
-    // Scroll-Listener für das Nachladen hinzufügen
     listEl.onscroll = () => {
         const nearBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 50;
         if (nearBottom && !isLoadingMore && !allScoresLoaded) {
@@ -1617,37 +1455,30 @@ window.showHighscores = async function() {
     };
 };
 
-// Lädt die nächste "Seite" an Scores (abgesicherte Version)
 async function loadMoreHighscores() {
     if (isLoadingMore || allScoresLoaded) return;
-
     isLoadingMore = true;
     const loadingEl = document.getElementById('highscore-loading');
     loadingEl.style.display = 'block';
-    loadingEl.textContent = 'LOADING...'; // Text zurücksetzen
+    loadingEl.textContent = 'LOADING...';
 
     try {
         if (typeof getHighscoresPaged === 'function') {
             const result = await getHighscoresPaged(15, lastVisibleDoc);
             displayHighscores(result.scores, true);
-            
             lastVisibleDoc = result.lastDoc;
             if (!lastVisibleDoc) {
                 allScoresLoaded = true;
                 loadingEl.textContent = '· END OF LIST ·';
             }
         } else {
-            // Dieser Fall tritt ein, wenn die Funktion in firebase-config.js fehlt
-            console.error("Funktion getHighscoresPaged ist nicht definiert!");
             loadingEl.innerHTML = '<span style="color:#ff1c59;">CONFIG ERROR</span>';
             allScoresLoaded = true;
         }
     } catch (error) {
-        console.error('Failed to load more highscores:', error);
         loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>';
         allScoresLoaded = true;
     } finally {
-        // Dieser Block wird IMMER ausgeführt, egal ob es einen Fehler gab oder nicht.
         isLoadingMore = false;
         if (!allScoresLoaded) {
             loadingEl.style.display = 'none';
@@ -1655,34 +1486,18 @@ async function loadMoreHighscores() {
     }
 }
 
-// Zeigt die Scores an (kann jetzt Scores an die Liste anhängen)
 function displayHighscores(scores, append = false) {
     const listEl = document.getElementById('highscore-list');
     listEl.style.display = 'block';
-
-    if (!append) {
-        listEl.innerHTML = '';
-    }
-
+    if (!append) listEl.innerHTML = '';
     if (scores.length === 0 && !append) {
         document.getElementById('highscore-loading').textContent = "NO SCORES YET";
         return;
     }
-    
     let html = '';
     scores.forEach(entry => {
-        // Die Logik zur Ermittlung des Rangs muss angepasst werden, da wir seitenweise laden
-        // Wir zeigen einfach die sortierten Einträge ohne expliziten Rang
-        const medal = ''; // Ränge sind bei Endless Scroll schwierig, Medaillen ggf. weglassen
-        
-        html += `
-            <div class="highscore-entry">
-                <span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span>
-                <span class="highscore-score">${entry.score}</span>
-            </div>
-        `;
+        html += `<div class="highscore-entry"><span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span><span class="highscore-score">${entry.score}</span></div>`;
     });
-    
     listEl.innerHTML += html;
 }
 
@@ -1692,125 +1507,9 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 </script>
-
-</div> <!-- body_0 -->
-
-	<script type="text/javascript">
-// Modal HTML (vor dem Ende von body_0 einfügen, aber hier per JS erstellt)
-var modal_html = `
-<div id="nameInputModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.8);">
-  <div style="background:#222; margin:15% auto; padding:20px; max-width:400px; border:2px solid #fff;">
-    <h2 style="color:#fff; text-align:center;">Enter Your Name</h2>
-    <input type="text" id="playerNameInput" maxlength="16" 
-           style="width:100%; padding:10px; font-size:18px; box-sizing:border-box;">
-    <button onclick="submitPlayerName()" 
-            style="width:100%; margin-top:10px; padding:10px; font-size:18px; cursor:pointer;">
-      Submit
-    </button>
-    <button onclick="closeNameModal()" 
-            style="width:100%; margin-top:5px; padding:10px; font-size:14px; cursor:pointer;">
-      Cancel
-    </button>
-  </div>
-</div>
-
-<div id="leaderboardModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.8); overflow:auto;">
-  <div style="background:#222; margin:5% auto; padding:20px; max-width:500px; border:2px solid #fff; overflow-y:auto; max-height:80vh;">
-    <h2 style="color:#fff; text-align:center;">Leaderboard</h2>
-    <div id="leaderboardContent" style="color:#fff; overflow-y:auto;">
-      Loading...
-    </div>
-    <button onclick="closeLeaderboardModal()" 
-            style="width:100%; margin-top:15px; padding:10px; font-size:16px; cursor:pointer;">
-      Close
-    </button>
-  </div>
-</div>
-`;
-
-// Modal HTML ins DOM einfügen
-document.body.insertAdjacentHTML('beforeend', modal_html);
-
-// GPIO Polling (überwacht die Pins)
-function checkGPIOTriggers() {
-  if (!pico8_gpio || !p8_is_running) {
-    requestAnimationFrame(checkGPIOTriggers);
-    return;
-  }
-  
-  // Pin 3: Name Input Modal öffnen
-  if (pico8_gpio[3] == 1) {
-    pico8_gpio[3] = 0; // Pin zurücksetzen
-    openNameModal();
-  }
-  
-  // Pin 4: Leaderboard Modal öffnen
-  if (pico8_gpio[4] == 1) {
-    pico8_gpio[4] = 0; // Pin zurücksetzen
-    openLeaderboardModal();
-  }
-  
-  requestAnimationFrame(checkGPIOTriggers);
-}
-
-// Modal-Funktionen
-function openNameModal() {
-  document.getElementById('nameInputModal').style.display = 'block';
-  document.getElementById('playerNameInput').focus();
-}
-
-function closeNameModal() {
-  document.getElementById('nameInputModal').style.display = 'none';
-}
-
-function submitPlayerName() {
-  var name = document.getElementById('playerNameInput').value.trim();
-  if (name.length > 0) {
-    var score = (pico8_gpio[1] || 0) * 256 + (pico8_gpio[2] || 0);
-    
-    // Hier Score an dein Backend senden
-    fetch('/api/submit-score', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({name: name, score: score})
-    })
-    .then(r => r.json())
-    .then(data => console.log('Score submitted:', data))
-    .catch(e => console.error('Error:', e));
-    
-    closeNameModal();
-  }
-}
-
-function openLeaderboardModal() {
-  document.getElementById('leaderboardModal').style.display = 'block';
-  
-  // Leaderboard laden
-  fetch('/api/leaderboard')
-    .then(r => r.json())
-    .then(data => {
-      var html = '<table style="width:100%; color:#fff;">';
-      html += '<tr><th>Rank</th><th>Name</th><th>Score</th></tr>';
-      data.forEach((entry, i) => {
-        html += `<tr><td>${i+1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`;
-      });
-      html += '</table>';
-      document.getElementById('leaderboardContent').innerHTML = html;
-    })
-    .catch(e => {
-      document.getElementById('leaderboardContent').innerHTML = 'Error loading leaderboard';
-    });
-}
-
-function closeLeaderboardModal() {
-  document.getElementById('leaderboardModal').style.display = 'none';
-}
-
-// GPIO Polling starten
-requestAnimationFrame(checkGPIOTriggers);
-</script>
 </body>
 </html>
+
 
 
 
