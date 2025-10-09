@@ -1520,8 +1520,7 @@ function showSubmitModal() {
 function showLeaderboardModal() {
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
-    openModal();
-    loadHighscores();
+    showHighscores();
 }
 
 function openModal() {
@@ -1592,21 +1591,23 @@ window.submitCurrentScore = async function() {
 window.skipSubmit = function() { hideModal(); };
 // Initialisiert den Highscore-View und lädt die ersten Einträge
 window.showHighscores = async function() {
+    // Zuerst das Modal öffnen und UI vorbereiten
+    openModal();
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
     
-    // Zustand zurücksetzen für eine neue Ansicht
+    // Zustand für den Endless Scroll zurücksetzen
     const listEl = document.getElementById('highscore-list');
     listEl.innerHTML = ''; // Liste leeren
     lastVisibleDoc = null;
     allScoresLoaded = false;
     inHighscoreView = true;
     
-    await loadMoreHighscores(); // Erste Ladung
+    // Erste Ladung der Scores anstoßen
+    await loadMoreHighscores();
 
-    // Scroll-Listener hinzufügen
+    // Scroll-Listener für das Nachladen hinzufügen
     listEl.onscroll = () => {
-        // Prüfen, ob der User fast am Ende der Liste ist
         const nearBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 50;
         if (nearBottom && !isLoadingMore && !allScoresLoaded) {
             loadMoreHighscores();
@@ -1693,6 +1694,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
