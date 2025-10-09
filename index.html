@@ -1132,22 +1132,6 @@ canvas{
 <!-- Firebase Config -->
 <script src="./firebase-config.js"></script>
 
-<div id="debug-box" style="
-    position: fixed;
-    bottom: 5px;
-    left: 5px;
-    background-color: rgba(0,0,0,0.7);
-    color: #00ff00;
-    padding: 5px;
-    font-family: monospace;
-    font-size: 12px;
-    border: 1px solid #00ff00;
-    z-index: 999999999999;
-    pointer-events: none;">
-    Debug-Info wird geladen...
-</div>
-
-
 <!-- Game Over Modal mit integriertem Highscore -->
 <div id="overlay"></div>
 
@@ -1410,24 +1394,21 @@ body.modal-open {
 </style>
 
 <script>
-
-	// ============================================
-// DIAGNOSE-SKRIPT
-// ============================================
+// ===== DOM-FIX FÜR MOBILE SICHTBARKEIT =====
+// Dies muss als Erstes passieren, wenn die Seite geladen ist.
 document.addEventListener('DOMContentLoaded', function() {
-    const debugBox = document.getElementById('debug-box');
-    if (debugBox) {
-        setInterval(function() {
-            let gpio_status = "nicht definiert";
-            // Prüfen, ob pico8_gpio existiert und einen Wert hat
-            if (typeof pico8_gpio !== 'undefined' && pico8_gpio && typeof pico8_gpio[3] !== 'undefined') {
-                gpio_status = pico8_gpio[3];
-            }
-            debugBox.textContent = 'GPIO[3] Status: ' + gpio_status;
-        }, 100); // Alle 100ms aktualisieren
-    }
+    // Finde die UI-Elemente
+    const overlay = document.getElementById('overlay');
+    const nameModal = document.getElementById('name-modal');
+
+    // Hänge sie ans Ende des <body> an.
+    // Das stellt sicher, dass sie über dem PICO-8 Frame liegen,
+    // der beim Start ebenfalls verschoben wird.
+    if (overlay) document.body.appendChild(overlay);
+    if (nameModal) document.body.appendChild(nameModal);
+    console.log('✅ Modal-Elemente an das Ende des DOM verschoben.');
 });
-	
+
 // GPIO Pin Definitionen
 const GPIO_GAME_STATE = 0;
 const GPIO_SCORE_HIGH = 1;
@@ -1444,35 +1425,29 @@ let modalDebounce = false; // Verhindert sofortige Aktion nach Öffnen
 
 console.log('🎮 Game Bridge initialisiert und wartet auf Spielstart...');
 
-// ===== TEIL 1: Das Anzeige-Problem auf Mobilgeräten lösen =====
-
 // Diese Funktion wird erst aufgerufen, wenn PICO-8 garantiert läuft.
 function initializeGameBridge() {
     console.log('✅ PICO-8 ist gestartet. Bridge wird aktiviert.');
-    setInterval(checkGameTriggers, 100);    // Prüft auf "Game Over" und Modal-Anfragen
-    setInterval(checkModalControls, 50);     // Prüft auf PICO-8 Controller-Input für das Modal
+    setInterval(checkGameTriggers, 100);
+    setInterval(checkModalControls, 50);
 }
 
-// Finde die p8_run_cart Funktion und erweitere sie.
-// Wir "kapern" die Originalfunktion, um unseren Code am Ende anzuhängen.
+// Erweitere die p8_run_cart Funktion, um den Start der Bridge zu steuern
 if (typeof p8_run_cart === 'function') {
     const original_p8_run_cart = p8_run_cart;
     p8_run_cart = function() {
         original_p8_run_cart.apply(this, arguments);
-        // Jetzt, wo das Spiel läuft, starten wir unsere Bridge
         initializeGameBridge();
     };
 }
 
-
-// Diese Funktion prüft die GPIO-Pins auf Anfragen vom Spiel
+// Prüft die GPIO-Pins auf Anfragen vom Spiel
 function checkGameTriggers() {
     if (typeof pico8_gpio === 'undefined' || !pico8_gpio) return;
     
     const modal = document.getElementById('name-modal');
     if (!modal || modal.classList.contains('active')) return;
 
-    // Trigger auslesen
     const triggerSubmit = pico8_gpio[GPIO_MODAL_SUBMIT];
     const triggerLeaderboard = pico8_gpio[GPIO_MODAL_LEADERBOARD];
     
@@ -1481,73 +1456,52 @@ function checkGameTriggers() {
         const scoreLow = pico8_gpio[GPIO_SCORE_LOW] || 0;
         pendingScore = (scoreHigh * 256) + scoreLow;
         showSubmitModal();
-        pico8_gpio[GPIO_MODAL_SUBMIT] = 0; // Trigger im Spiel zurücksetzen
+        pico8_gpio[GPIO_MODAL_SUBMIT] = 0;
     }
     
     if (triggerLeaderboard === 1) {
         showLeaderboardModal();
-        pico8_gpio[GPIO_MODAL_LEADERBOARD] = 0; // Trigger im Spiel zurücksetzen
+        pico8_gpio[GPIO_MODAL_LEADERBOARD] = 0;
     }
 }
 
-// ===== TEIL 2: Das Steuerungs-Problem lösen =====
-
-// Diese Funktion liest die PICO-8 Controls und "konsumiert" sie für das Modal
+// Liest die PICO-8 Controls und "konsumiert" sie für das Modal
 function checkModalControls() {
     const modal = document.getElementById('name-modal');
     if (!modal || !modal.classList.contains('active') || typeof pico8_buttons === 'undefined') {
         return;
     }
 
-    // Input-Debounce: Ignoriere den ersten Input direkt nach dem Öffnen des Modals
     if (modalDebounce) {
         modalDebounce = false;
-        pico8_buttons[0] = 0; // Wichtig: Input konsumieren
+        pico8_buttons[0] = 0;
         return;
     }
 
-    // Schritt 1: Lies den aktuellen Button-Status aus
     const buttons = pico8_buttons[0];
-    
-    // Schritt 2: Setze den Status SOFORT zurück, damit das Spiel ihn nicht verarbeitet
-    pico8_buttons[0] = 0;
+    pico8_buttons[0] = 0; // Input sofort konsumieren!
 
-    // Schritt 3: Verarbeite den ausgelesenen Status für unser Menü
     if (buttons > 0) {
         if (!inHighscoreView) {
-            // Navigation im Haupt-Modal
-            if (buttons & 0x4) { // UP
-                menuIndex = (menuIndex - 1 + 3) % 3;
-                updateMenuSelection();
-            }
-            if (buttons & 0x8) { // DOWN
-                menuIndex = (menuIndex + 1) % 3;
-                updateMenuSelection();
-            }
-            if (buttons & 0x10 || buttons & 0x20) { // O oder X
-                selectMenuItem();
-            }
+            if (buttons & 0x4) { menuIndex = (menuIndex - 1 + 3) % 3; updateMenuSelection(); }
+            if (buttons & 0x8) { menuIndex = (menuIndex + 1) % 3; updateMenuSelection(); }
+            if (buttons & 0x10 || buttons & 0x20) { selectMenuItem(); }
         } else {
-            // Im Highscore-View: O/X schließt das Modal
-            if (buttons & 0x10 || buttons & 0x20) {
-                hideModal();
-            }
+            if (buttons & 0x10 || buttons & 0x20) { hideModal(); }
         }
     }
 }
 
-// --- Hilfsfunktionen für das Modal (bleiben fast gleich) ---
+// --- Deine restlichen Hilfsfunktionen ---
+// (Hier werden sie alle zur Vollständigkeit aufgelistet)
 
 function showSubmitModal() {
     document.getElementById('final-score').textContent = pendingScore;
     document.getElementById('game-over-view').style.display = 'block';
     document.getElementById('highscore-view').style.display = 'none';
-    
     openModal();
-    
     const nameInput = document.getElementById('player-name');
     nameInput.value = '';
-    // Fokus nur auf Desktop, um mobile Tastatur-Probleme zu vermeiden
     if (!/Mobi|Android/i.test(navigator.userAgent)) {
        setTimeout(() => nameInput.focus(), 100);
     }
@@ -1566,7 +1520,7 @@ function openModal() {
     document.body.classList.add('modal-open');
     menuIndex = 0;
     inHighscoreView = false;
-    modalDebounce = true; // Debounce aktivieren
+    modalDebounce = true;
     updateMenuSelection();
 }
 
@@ -1577,11 +1531,6 @@ function hideModal() {
     inHighscoreView = false;
 }
 
-// ... (Der Rest deiner Funktionen wie submitCurrentScore, updateMenuSelection etc. kann hier folgen)
-// Stelle sicher, dass alle deine bestehenden Hilfsfunktionen hier eingefügt werden.
-
-// (Hier deine restlichen Funktionen wie updateMenuSelection, selectMenuItem, submitCurrentScore, skipSubmit, showHighscores, loadHighscores, displayHighscores, escapeHtml einfügen)
-// Update Menu Selection
 function updateMenuSelection() {
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach((item, index) => {
@@ -1595,57 +1544,34 @@ function updateMenuSelection() {
     });
 }
 
-// Select Menu Item
 function selectMenuItem() {
     if (menuIndex === 0) submitCurrentScore();
     else if (menuIndex === 1) showHighscores();
     else if (menuIndex === 2) skipSubmit();
 }
 
-// Submit Score
 window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
-    const playerName = nameInput.value.trim();
-    const finalName = playerName || 'Anonymous';
-    
-    console.log('📤 Submitting:', finalName, pendingScore);
-    nameInput.blur();
-    
-    const menuItems = document.querySelectorAll('.menu-item');
-    const saveItem = menuItems[0];
+    const playerName = nameInput.value.trim() || 'Anonymous';
+    const saveItem = document.querySelectorAll('.menu-item')[0];
     if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
-    
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     if (typeof submitScoreToFirebase === 'function') {
-        const result = await submitScoreToFirebase(finalName, pendingScore);
-        
+        const result = await submitScoreToFirebase(playerName, pendingScore);
         if (result.success) {
-            console.log('✅ Saved!');
             if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVED!';
-            setTimeout(() => {
-                inHighscoreView = true;
-                showHighscores();
-            }, 1000);
+            setTimeout(() => { inHighscoreView = true; showHighscores(); }, 1000);
         } else {
-            console.error('❌ Failed:', result.error);
             if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
             alert('Failed: ' + result.error);
         }
     } else {
-        console.error('❌ Firebase not loaded!');
         if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
         alert('Firebase not ready');
     }
 };
 
-// Skip Submit
-window.skipSubmit = function() {
-    console.log('⏭️ Skipped');
-    hideModal();
-};
-
-// Show Highscores
+window.skipSubmit = function() { hideModal(); };
 window.showHighscores = async function() {
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
@@ -1654,102 +1580,49 @@ window.showHighscores = async function() {
     await loadHighscores();
 };
 
-// Load Highscores
 async function loadHighscores() {
     const loadingEl = document.getElementById('highscore-loading');
     const listEl = document.getElementById('highscore-list');
-    
     loadingEl.style.display = 'block';
     listEl.style.display = 'none';
-    
     try {
         if (typeof getHighscores === 'function') {
             highscoresCache = await getHighscores(10);
             displayHighscores();
-        } else {
-            loadingEl.innerHTML = '<span style="color:#ff1c59;">FIREBASE ERROR</span>';
-        }
-    } catch (error) {
-        console.error('Failed to load highscores:', error);
-        loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>';
-    }
+        } else { loadingEl.innerHTML = '<span style="color:#ff1c59;">FIREBASE ERROR</span>';}
+    } catch (error) { loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>'; }
 }
 
-// Display Highscores
 function displayHighscores() {
     const loadingEl = document.getElementById('highscore-loading');
     const listEl = document.getElementById('highscore-list');
-    
     loadingEl.style.display = 'none';
     listEl.style.display = 'block';
-    
     if (highscoresCache.length === 0) {
-        listEl.innerHTML = '<p style="text-align:center; color:#29adff; padding:2rem; letter-spacing:1px;">NO SCORES YET<br><br>BE THE FIRST!</p>';
+        listEl.innerHTML = '<p style="text-align:center; color:#29adff;">NO SCORES YET</p>';
         return;
     }
-    
     let html = '';
     highscoresCache.forEach((entry, index) => {
         const rank = index + 1;
-        const rankClass = rank === 1 ? 'top-1' : rank === 2 ? 'top-2' : rank === 3 ? 'top-3' : '';
+        const rankClass = rank <= 3 ? `top-${rank}` : '';
         const medal = rank === 1 ? '♔' : rank === 2 ? '♕' : rank === 3 ? '♖' : '·';
-        
-        html += `
-            <div class="highscore-entry ${rankClass}">
-                <span class="highscore-rank">${medal} ${rank}</span>
-                <span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span>
-                <span class="highscore-score">${entry.score}</span>
-            </div>
-        `;
+        html += `<div class="highscore-entry ${rankClass}"><span class="highscore-rank">${medal} ${rank}</span><span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span><span class="highscore-score">${entry.score}</span></div>`;
     });
-    
     listEl.innerHTML = html;
 }
 
-// Escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-</script>
-<script>
-// FORCE SHOW Modal
-function forceShowModal() {
-    console.log('🧪 FORCE SHOWING MODAL');
-    const modal = document.getElementById('name-modal');
-    const overlay = document.getElementById('overlay');
-    
-    if (modal) {
-        modal.classList.add('active');
-        modal.style.display = 'block';
-        modal.style.background = '#ff0000';  // ROT
-        console.log('✅ Modal active');
-    } else {
-        console.log('❌ Modal not found');
-        alert('Modal not found!');
-    }
-    
-    if (overlay) {
-        overlay.classList.add('active');
-        overlay.style.display = 'block';
-        console.log('✅ Overlay active');
-    } else {
-        console.log('❌ Overlay not found');
-    }
-    
-    document.body.classList.add('modal-open');
-    
-    // Zeige Info
-    alert('Modal Status:\nModal: ' + (modal ? 'FOUND' : 'NOT FOUND') + 
-          '\nOverlay: ' + (overlay ? 'FOUND' : 'NOT FOUND'));
 }
 </script>
 
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
