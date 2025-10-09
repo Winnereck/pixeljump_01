@@ -1463,15 +1463,20 @@ if (typeof p8_run_cart === 'function') {
     };
 }
 
-	// Erzeugt einen zufälligen, thematisch passenden Namen
+	// Erzeugt einen zufälligen, thematisch passenden Namen mit einer Zahl
 function generateRandomName() {
     const ADJECTIVES = ["Pixel", "Cosmic", "Robo", "Neon", "Data", "Retro", "Astro", "Turbo", "Ghostly", "Quantum"];
     const NOUNS = ["Jumper", "Pilot", "Wizard", "Knight", "Ranger", "Bot", "Ghost", "Explorer", "Ninja", "Surfer"];
 
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
     const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+    
+    // NEU: Erzeugt eine zufällige Zahl zwischen 0 und 99
+    const num = Math.floor(Math.random() * 100);
 
-    return `${adj} ${noun}`;
+    // NEU: Fügt die Zahl zum Namen hinzu
+    // (Optional: .toString().padStart(2, '0') würde eine '07' aus '7' machen)
+    return `${adj} ${noun} ${num}`;
 }
 
 // Prüft die GPIO-Pins auf Anfragen vom Spiel
@@ -1717,6 +1722,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
