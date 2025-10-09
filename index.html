@@ -1401,19 +1401,31 @@ body.modal-open {
 </style>
 
 <script>
-// ===== DOM-FIX FÜR MOBILE SICHTBARKEIT =====
-// Dies muss als Erstes passieren, wenn die Seite geladen ist.
+
 document.addEventListener('DOMContentLoaded', function() {
     // Finde die UI-Elemente
     const overlay = document.getElementById('overlay');
     const nameModal = document.getElementById('name-modal');
 
-    // Hänge sie ans Ende des <body> an.
-    // Das stellt sicher, dass sie über dem PICO-8 Frame liegen,
-    // der beim Start ebenfalls verschoben wird.
     if (overlay) document.body.appendChild(overlay);
     if (nameModal) document.body.appendChild(nameModal);
     console.log('✅ Modal-Elemente an das Ende des DOM verschoben.');
+
+    const nameInput = document.getElementById('player-name');
+    if (nameInput) {
+        // Wir lauschen auf das 'blur'-Ereignis. Das wird ausgelöst,
+        // wenn das Eingabefeld den Fokus verliert (z.B. Tastatur wird geschlossen).
+        nameInput.addEventListener('blur', () => {
+            // Eine winzige Verzögerung gibt dem Browser Zeit, die Tastatur
+            // komplett auszublenden, bevor wir scrollen.
+            setTimeout(() => {
+                // Dieser Befehl sagt der übergeordneten Shopify-Seite,
+                // sie soll ganz nach oben (Position 0, 0) scrollen.
+                window.parent.scrollTo(0, 0);
+                console.log('⬆️ Forcing parent window to scroll to top.');
+            }, 100); // 100 Millisekunden Verzögerung
+        });
+    }
 });
 
 // GPIO Pin Definitionen
@@ -1694,6 +1706,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
