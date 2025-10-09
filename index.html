@@ -1149,7 +1149,7 @@ canvas{
                 type="text" 
                 id="player-name" 
                 placeholder="PLAYER" 
-                maxlength="12" 
+                maxlength="20" 
                 value="">
         </div>
         
@@ -1463,6 +1463,17 @@ if (typeof p8_run_cart === 'function') {
     };
 }
 
+	// Erzeugt einen zufälligen, thematisch passenden Namen
+function generateRandomName() {
+    const ADJECTIVES = ["Pixel", "Cosmic", "Robo", "Neon", "Data", "Retro", "Astro", "Turbo", "Ghostly", "Quantum"];
+    const NOUNS = ["Jumper", "Pilot", "Wizard", "Knight", "Ranger", "Bot", "Ghost", "Explorer", "Ninja", "Surfer"];
+
+    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+
+    return `${adj} ${noun}`;
+}
+
 // Prüft die GPIO-Pins auf Anfragen vom Spiel
 function checkGameTriggers() {
     if (typeof pico8_gpio === 'undefined' || !pico8_gpio) return;
@@ -1573,7 +1584,7 @@ function selectMenuItem() {
 
 window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
-    const playerName = nameInput.value.trim() || 'Anonymous';
+    const playerName = nameInput.value.trim() || generateRandomName();
     const saveItem = document.querySelectorAll('.menu-item')[0];
     if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
 
@@ -1706,6 +1717,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
