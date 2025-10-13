@@ -400,15 +400,14 @@
 		if (!is_fullscreen && p8_frame) 
 			csize = Math.min(csize, last_windowed_container_height); // p8_frame_0 parent
 		
-
-		if (is_fullscreen)
-		{
-			// always center horizontally
+        
+        // IMMER horizontal zentrieren (Desktop & Fullscreen)
 		margin_left = (frame_width - csize)/2;
 
+
 		if (is_fullscreen)
 		{
-			// (diese Zeile wurde nach oben verschoben)
+			// (Die margin_left-Zeile wurde nach oben verschoben)
 
 			if (p8_touch_detected)
 			{
@@ -1726,6 +1725,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
