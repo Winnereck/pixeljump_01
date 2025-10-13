@@ -1412,20 +1412,23 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ Modal-Elemente an das Ende des DOM verschoben.');
 
     const nameInput = document.getElementById('player-name');
-    if (nameInput) {
-        // Wir lauschen auf das 'blur'-Ereignis. Das wird ausgelöst,
-        // wenn das Eingabefeld den Fokus verliert (z.B. Tastatur wird geschlossen).
-        nameInput.addEventListener('blur', () => {
-            // Eine winzige Verzögerung gibt dem Browser Zeit, die Tastatur
-            // komplett auszublenden, bevor wir scrollen.
-            setTimeout(() => {
-                // Dieser Befehl sagt der übergeordneten Shopify-Seite,
-                // sie soll ganz nach oben (Position 0, 0) scrollen.
-                window.parent.scrollTo(0, 0);
-                console.log('⬆️ Forcing parent window to scroll to top.');
-            }, 100); // 100 Millisekunden Verzögerung
-        });
-    }
+	if (nameInput) {
+	    nameInput.addEventListener('blur', () => {
+	        setTimeout(() => {
+	            // Versuche alle Scroll-Methoden
+	            window.scrollTo(0, 0);
+	            document.body.scrollTop = 0;
+	            document.documentElement.scrollTop = 0;
+	            
+	            // WICHTIG: Sende Message an Parent Window
+	            if (window.parent && window.parent !== window) {
+	                window.parent.postMessage({ type: 'SCROLL_TO_TOP' }, '*');
+	            }
+	            
+	            console.log('⬆️ Scroll to top triggered');
+	        }, 150); // Etwas länger warten
+	    });
+	}
 });
 
 // GPIO Pin Definitionen
@@ -1734,6 +1737,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
