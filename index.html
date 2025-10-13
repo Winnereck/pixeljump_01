@@ -1542,7 +1542,11 @@ function showSubmitModal() {
     document.getElementById('highscore-view').style.display = 'none';
     openModal();
     const nameInput = document.getElementById('player-name');
-    nameInput.value = '';
+    
+    // NEU: Generiere sofort einen Namen und fülle ihn ein
+    nameInput.value = generateRandomName();
+    nameInput.select(); // Markiere den Text, damit User ihn leicht ersetzen kann
+    
     if (!/Mobi|Android/i.test(navigator.userAgent)) {
        setTimeout(() => nameInput.focus(), 100);
     }
@@ -1592,7 +1596,8 @@ function selectMenuItem() {
 
 window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
-    const playerName = nameInput.value.trim() || generateRandomName();
+    // Verwende immer den Wert aus dem Input (ist jetzt immer gefüllt)
+    const playerName = nameInput.value.trim();
     const saveItem = document.querySelectorAll('.menu-item')[0];
     
     // NEU: Blur das Input-Feld um Tastatur zu schließen
@@ -1737,6 +1742,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
