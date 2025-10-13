@@ -1549,6 +1549,21 @@ function openModal() {
     inHighscoreView = false;
     modalDebounce = true;
     updateMenuSelection();
+    
+    // NEU: Fokussiere das Input-Feld auf Mobile nach kurzer Verzögerung
+    const nameInput = document.getElementById('player-name');
+    const gameOverView = document.getElementById('game-over-view');
+    
+    // Nur fokussieren wenn wir im Submit-View sind (nicht im Highscore-View)
+    if (nameInput && gameOverView.style.display !== 'none') {
+        setTimeout(() => {
+            nameInput.focus();
+            // iOS braucht manchmal einen zusätzlichen Click
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                nameInput.click();
+            }
+        }, 300); // Längere Verzögerung für Mobile
+    }
 }
 
 function hideModal() {
@@ -1712,6 +1727,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
