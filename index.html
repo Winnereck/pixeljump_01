@@ -1591,19 +1591,31 @@ window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
     const playerName = nameInput.value.trim() || generateRandomName();
     const saveItem = document.querySelectorAll('.menu-item')[0];
+    
+    // NEU: Blur das Input-Feld um Tastatur zu schließen
+    if (nameInput) {
+        nameInput.blur();
+    }
+    
+    // NEU: Scroll nach oben (für Mobile)
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0; // Safari
+        if (window.parent) {
+            window.parent.scrollTo(0, 0);
+        }
+    }, 100);
+    
     if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
 
-    // Kurze künstliche Pause, damit der User das "SAVING..." sieht
     await new Promise(resolve => setTimeout(resolve, 500)); 
 
     if (typeof submitScoreToFirebase === 'function') {
         const result = await submitScoreToFirebase(playerName, pendingScore);
         if (result.success) {
             if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVED!';
-            // Nach einer weiteren kurzen Pause das Modal schließen
             setTimeout(() => {
                 hideModal();
-                // Reset für den nächsten Durchgang
                 if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
             }, 700); 
         } else {
@@ -1722,6 +1734,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
