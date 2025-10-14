@@ -1583,6 +1583,27 @@ function hideModal() {
     document.getElementById('name-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
     inHighscoreView = false;
+    
+    // NEU: Nach Modal-Schließen sofort scrollen
+    setTimeout(() => {
+        // Scroll innerhalb iFrame
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+        
+        // Message an Parent
+        try {
+            window.parent.postMessage({ 
+                type: 'SCROLL_TO_TOP',
+                source: 'pixeljump',
+                timestamp: Date.now()
+            }, '*');
+        } catch(e) {
+            console.log('Message send failed:', e);
+        }
+        
+        console.log('🔄 Scroll after modal close');
+    }, 100);
 }
 
 function updateMenuSelection() {
@@ -1762,6 +1783,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
