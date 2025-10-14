@@ -1403,7 +1403,6 @@ body.modal-open {
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Finde die UI-Elemente
     const overlay = document.getElementById('overlay');
     const nameModal = document.getElementById('name-modal');
 
@@ -1412,25 +1411,36 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ Modal-Elemente an das Ende des DOM verschoben.');
 
     const nameInput = document.getElementById('player-name');
-	if (nameInput) {
-	    nameInput.addEventListener('blur', () => {
-	        setTimeout(() => {
-	            // Versuche alle Scroll-Methoden
-	            window.scrollTo(0, 0);
-	            document.body.scrollTop = 0;
-	            document.documentElement.scrollTop = 0;
-	            
-	            // WICHTIG: Sende Message an Parent Window
-	            if (window.parent && window.parent !== window) {
-	                window.parent.postMessage({ type: 'SCROLL_TO_TOP' }, '*');
-	            }
-	            
-	            console.log('⬆️ Scroll to top triggered');
-	        }, 150); // Etwas länger warten
-	    });
-	}
+    if (nameInput) {
+        // Mehrere Events für maximale Kompatibilität
+        ['blur', 'focusout'].forEach(eventType => {
+            nameInput.addEventListener(eventType, () => {
+                console.log('🎹 Keyboard event:', eventType);
+                
+                // Warte bis Tastatur wirklich weg ist
+                setTimeout(() => {
+                    // Scroll innerhalb iFrame
+                    window.scrollTo(0, 0);
+                    document.body.scrollTop = 0;
+                    document.documentElement.scrollTop = 0;
+                    
+                    // Message an Parent senden
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({ 
+                                type: 'SCROLL_TO_TOP',
+                                timestamp: Date.now()
+                            }, '*');
+                            console.log('📨 Message sent to parent');
+                        }
+                    } catch (e) {
+                        console.error('Failed to send message:', e);
+                    }
+                }, 300); // Längere Verzögerung
+            });
+        });
+    }
 });
-
 // GPIO Pin Definitionen
 const GPIO_GAME_STATE = 0;
 const GPIO_SCORE_HIGH = 1;
@@ -1742,6 +1752,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
