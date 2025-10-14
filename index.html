@@ -1606,23 +1606,31 @@ function selectMenuItem() {
 
 window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
-    // Verwende immer den Wert aus dem Input (ist jetzt immer gefüllt)
     const playerName = nameInput.value.trim();
     const saveItem = document.querySelectorAll('.menu-item')[0];
     
-    // NEU: Blur das Input-Feld um Tastatur zu schließen
     if (nameInput) {
         nameInput.blur();
     }
     
-    // NEU: Scroll nach oben (für Mobile)
+    document.body.classList.remove('modal-open');
+    
     setTimeout(() => {
+        // Scroll nur INNERHALB des iFrames
         window.scrollTo(0, 0);
-        document.body.scrollTop = 0; // Safari
-        if (window.parent) {
-            window.parent.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+        
+        // Sende Message an Parent (KEIN direkter Zugriff!)
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ 
+                type: 'SCROLL_TO_TOP',
+                source: 'pixeljump'
+            }, '*'); // Oder spezifische Domain statt '*'
         }
-    }, 100);
+        
+        console.log('⬆️ Scroll executed, message sent');
+    }, 200);
     
     if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
 
@@ -1637,10 +1645,12 @@ window.submitCurrentScore = async function() {
                 if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
             }, 700); 
         } else {
+            document.body.classList.add('modal-open');
             if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
             alert('Failed: ' + result.error);
         }
     } else {
+        document.body.classList.add('modal-open');
         if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
         alert('Firebase not ready');
     }
@@ -1752,6 +1762,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
