@@ -1684,10 +1684,9 @@ window.submitCurrentScore = async function() {
 window.skipSubmit = function() { hideModal(); };
 // Initialisiert den Highscore-View und lädt die ersten Einträge
 // Globale Variable für Rang-Tracking (füge zu deinen anderen globalen Variablen hinzu)
-// Globale Variable für Rang-Tracking
 let currentRankOffset = 0;
 
-// VERBESSERTE showHighscores mit Debug-Logging
+// Korrigiere showHighscores:
 window.showHighscores = async function() {
     openModal();
     document.getElementById('game-over-view').style.display = 'none';
@@ -1697,95 +1696,66 @@ window.showHighscores = async function() {
     listEl.innerHTML = '';
     lastVisibleDoc = null;
     allScoresLoaded = false;
-    currentRankOffset = 0;
+    currentRankOffset = 0; // Rang-Counter zurücksetzen
     inHighscoreView = true;
     
-    console.log('✅ Highscore view initialized');
-    
     await loadMoreHighscores();
-    
-    // VERBESSERTER Scroll-Listener mit Debug-Logging
-    listEl.onscroll = function() {
-        if (isLoadingMore || allScoresLoaded) {
-            console.log('⏸️ Skip scroll trigger:', { isLoadingMore, allScoresLoaded });
-            return;
-        }
-        
-        const scrollTop = listEl.scrollTop;
-        const scrollHeight = listEl.scrollHeight;
-        const clientHeight = listEl.clientHeight;
-        const scrollBottom = scrollHeight - scrollTop - clientHeight;
-        
-        console.log('📊 Scroll:', { 
-            top: Math.round(scrollTop), 
-            height: scrollHeight, 
-            client: clientHeight, 
-            bottom: Math.round(scrollBottom)
-        });
-        
-        // Lade mehr wenn weniger als 100px vom Ende
-        if (scrollBottom < 100) {
-            console.log('🔄 TRIGGERING LOAD MORE!');
+
+    // Scroll-Listener für Nachladen
+    listEl.onscroll = () => {
+        const nearBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 100;
+        if (nearBottom && !isLoadingMore && !allScoresLoaded) {
+            console.log('📜 Loading more scores...');
             loadMoreHighscores();
         }
     };
-    
-    console.log('✅ Scroll listener attached to:', listEl);
 };
-
-// VERBESSERTE loadMoreHighscores mit Debug-Logging
+// Lädt die nächste "Seite" an Scores (abgesicherte Version)
 async function loadMoreHighscores() {
-    if (isLoadingMore || allScoresLoaded) {
-        console.log('⏸️ Skip loading:', { isLoadingMore, allScoresLoaded });
-        return;
-    }
+    if (isLoadingMore || allScoresLoaded) return;
 
-    console.log('📥 Loading more scores... lastDoc:', lastVisibleDoc ? 'exists' : 'null');
-    
     isLoadingMore = true;
     const loadingEl = document.getElementById('highscore-loading');
     loadingEl.style.display = 'block';
-    loadingEl.textContent = 'LOADING...';
+    loadingEl.textContent = 'LOADING...'; // Text zurücksetzen
 
     try {
         if (typeof getHighscoresPaged === 'function') {
             const result = await getHighscoresPaged(15, lastVisibleDoc);
-            console.log('✅ Received scores:', result.scores.length, 'New lastDoc:', result.lastDoc ? 'exists' : 'null');
-            
             displayHighscores(result.scores, true);
             
             lastVisibleDoc = result.lastDoc;
-            if (!lastVisibleDoc || result.scores.length === 0) {
+            if (!lastVisibleDoc) {
                 allScoresLoaded = true;
                 loadingEl.textContent = '· END OF LIST ·';
-                console.log('🏁 All scores loaded');
             }
         } else {
-            console.error("❌ Funktion getHighscoresPaged ist nicht definiert!");
+            // Dieser Fall tritt ein, wenn die Funktion in firebase-config.js fehlt
+            console.error("Funktion getHighscoresPaged ist nicht definiert!");
             loadingEl.innerHTML = '<span style="color:#ff1c59;">CONFIG ERROR</span>';
             allScoresLoaded = true;
         }
     } catch (error) {
-        console.error('❌ Failed to load more highscores:', error);
+        console.error('Failed to load more highscores:', error);
         loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>';
         allScoresLoaded = true;
     } finally {
+        // Dieser Block wird IMMER ausgeführt, egal ob es einen Fehler gab oder nicht.
         isLoadingMore = false;
         if (!allScoresLoaded) {
             loadingEl.style.display = 'none';
         }
-        console.log('✅ Loading complete. Total entries:', currentRankOffset);
     }
 }
 
-// displayHighscores (unverändert, funktioniert schon gut)
+// Korrigiere displayHighscores:
 function displayHighscores(scores, append = false) {
     const listEl = document.getElementById('highscore-list');
     listEl.style.display = 'block';
 
     if (!append) {
         listEl.innerHTML = '';
-        currentRankOffset = 0;
+        currentRankOffset = 0; // Reset bei neuem Laden
     }
 
     if (scores.length === 0 && !append) {
@@ -1795,7 +1765,7 @@ function displayHighscores(scores, append = false) {
     
     let html = '';
     scores.forEach((entry, index) => {
-        const rank = currentRankOffset + index + 1;
+        const rank = currentRankOffset + index + 1; // Berechne Rang
         const rankDisplay = `#${rank}`;
         
         html += `
@@ -1808,9 +1778,7 @@ function displayHighscores(scores, append = false) {
     });
     
     listEl.innerHTML += html;
-    currentRankOffset += scores.length;
-    
-    console.log('📝 Displayed', scores.length, 'entries. Total rank offset:', currentRankOffset);
+    currentRankOffset += scores.length; // Offset für nächste Seite erhöhen
 }
 
 function escapeHtml(text) {
@@ -1823,7 +1791,6 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
-
 
 
 
