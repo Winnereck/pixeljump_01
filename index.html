@@ -1370,6 +1370,32 @@ body.modal-open {
     overflow: hidden;
 }
 
+		/* Top 3 Highlighting */
+.highscore-entry.top-3 {
+    border-color: #ffec27;
+    border-width: 2px;
+    background: #1d2b53;
+}
+
+.highscore-rank { 
+    color: #5f574f; 
+    font-size: 0.9rem; 
+    min-width: 50px; 
+    text-align: left;
+}
+
+/* Button Hover Effect */
+a[href*="highscore"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 0px 0px #000 !important;
+    background: #74d7ff !important;
+}
+
+a[href*="highscore"]:active {
+    transform: translateY(2px);
+    box-shadow: 2px 2px 0px 0px #000 !important;
+}
+
 </style>
 
 <script>
@@ -1651,67 +1677,86 @@ window.submitCurrentScore = async function() {
 	
 window.skipSubmit = function() { hideModal(); };
 // Initialisiert den Highscore-View und lädt die ersten Einträge
+// Zeigt die Top 15 Scores und einen Link zur vollständigen Liste
+// Zeigt die Top 15 Scores und einen Link zur vollständigen Liste
 window.showHighscores = async function() {
-    // Zuerst das Modal öffnen und UI vorbereiten
     openModal();
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
     
-    // Zustand für den Endless Scroll zurücksetzen
     const listEl = document.getElementById('highscore-list');
-    listEl.innerHTML = ''; // Liste leeren
-    lastVisibleDoc = null;
-    allScoresLoaded = false;
+    listEl.innerHTML = '';
     inHighscoreView = true;
     
-    // Erste Ladung der Scores anstoßen
-    await loadMoreHighscores();
-
-    // Scroll-Listener für das Nachladen hinzufügen
-    listEl.onscroll = () => {
-        const nearBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 50;
-        if (nearBottom && !isLoadingMore && !allScoresLoaded) {
-            loadMoreHighscores();
-        }
-    };
+    // Lade nur die Top 15
+    await loadTop15Highscores();
 };
 
-// Lädt die nächste "Seite" an Scores (abgesicherte Version)
-async function loadMoreHighscores() {
-    if (isLoadingMore || allScoresLoaded) return;
-
-    isLoadingMore = true;
+// Lädt nur die Top 15 Scores
+async function loadTop15Highscores() {
     const loadingEl = document.getElementById('highscore-loading');
     loadingEl.style.display = 'block';
-    loadingEl.textContent = 'LOADING...'; // Text zurücksetzen
+    loadingEl.textContent = 'LOADING...';
 
     try {
         if (typeof getHighscoresPaged === 'function') {
-            const result = await getHighscoresPaged(15, lastVisibleDoc);
-            displayHighscores(result.scores, true);
-            
-            lastVisibleDoc = result.lastDoc;
-            if (!lastVisibleDoc) {
-                allScoresLoaded = true;
-                loadingEl.textContent = '· END OF LIST ·';
-            }
+            const result = await getHighscoresPaged(15, null);
+            displayTop15Scores(result.scores);
         } else {
-            // Dieser Fall tritt ein, wenn die Funktion in firebase-config.js fehlt
             console.error("Funktion getHighscoresPaged ist nicht definiert!");
             loadingEl.innerHTML = '<span style="color:#ff1c59;">CONFIG ERROR</span>';
-            allScoresLoaded = true;
         }
     } catch (error) {
-        console.error('Failed to load more highscores:', error);
+        console.error('Failed to load highscores:', error);
         loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>';
-        allScoresLoaded = true;
     } finally {
-        // Dieser Block wird IMMER ausgeführt, egal ob es einen Fehler gab oder nicht.
-        isLoadingMore = false;
-        if (!allScoresLoaded) {
-            loadingEl.style.display = 'none';
-        }
+        loadingEl.style.display = 'none';
     }
+}
+
+// Zeigt die Top 15 Scores mit Rängen und Link zur vollständigen Liste
+function displayTop15Scores(scores) {
+    const listEl = document.getElementById('highscore-list');
+    listEl.style.display = 'block';
+
+    if (scores.length === 0) {
+        document.getElementById('highscore-loading').textContent = "NO SCORES YET";
+        return;
+    }
+    
+    let html = '';
+    scores.forEach((entry, index) => {
+        const rank = index + 1;
+        const rankDisplay = `#${rank}`;
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+        
+        html += `
+            <div class="highscore-entry ${rank <= 3 ? 'top-3' : ''}">
+                <span class="highscore-rank">${medal} ${rankDisplay}</span>
+                <span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span>
+                <span class="highscore-score">${entry.score}</span>
+            </div>
+        `;
+    });
+    
+    // Füge Link zur vollständigen Highscore-Seite hinzu
+    html += `
+        <div style="text-align:center; margin-top:2rem; padding:1rem 0; border-top:2px solid #5f574f;">
+            <a href="https://retroshapes.com/pages/pixel-jump-highscore" 
+               target="_blank"
+               style="display:inline-block; background:#29adff; color:#000; 
+                      padding:0.75rem 1.5rem; border:3px solid #000; 
+                      font-size:1.25rem; letter-spacing:1px; text-decoration:none;
+                      box-shadow:4px 4px 0px 0px #000; transition:all 0.1s;">
+                🏆 VIEW ALL HIGHSCORES
+            </a>
+            <p style="color:#5f574f; font-size:0.9rem; margin-top:1rem;">
+                SEE THE COMPLETE LEADERBOARD
+            </p>
+        </div>
+    `;
+    
+    listEl.innerHTML = html;
 }
 
 // Zeigt die Scores an (kann jetzt Scores an die Liste anhängen)
@@ -1755,6 +1800,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
