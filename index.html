@@ -1169,24 +1169,43 @@ canvas{
 </div>
     
     <div id="highscore-view" style="display:none;">
-    <div class="close-button" onclick="hideModal()">×</div>
-    <h2 style="color:#ffec27; margin:0 0 1.5rem 0; font-size:1.5rem; letter-spacing:2px;">
-        ★ HIGHSCORES ★
-    </h2>
-    
-    <div id="highscore-list" style="display:none;"></div>
-    
-    <div id="highscore-loading" style="text-align:center; color:#29adff; padding:2rem; min-height:50px; font-size:0.9rem;">
-        LOADING...
-    </div>
-</div>
+        <div class="close-button" onclick="hideModal()">×</div>
+        <h2 style="color:#ffec27; margin:0 0 1.5rem 0; font-size:1.5rem; letter-spacing:2px;">
+            ★ HIGHSCORES ★
+        </h2>
+        
+        <div id="highscore-list" style="display:none; max-height:100%; overflow-y:auto;">
+            </div>
 
+        <div id="highscore-loading" style="text-align:center; color:#29adff; padding:2rem; min-height:50px; font-size:0.9rem;">
+            LOADING...
+        </div>
+    </div>
+
+<style>
 /* Prevent zoom and scrolling */
 html, body {
     touch-action: pan-x pan-y;
     -webkit-text-size-adjust: 100%;
 }
 
+/* Eltern-Container für korrekte Positionierung des X */
+#game-over-view, #highscore-view {
+    position: relative;
+}
+
+/* Stil für den Schließen-Button */
+.close-button {
+    position: absolute;
+    right: 10px;
+    font-size: 24px;
+    color: #5f574f;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.close-button:hover {
+    color: #fff;
+}
 /* Touch Controls - NIEDRIGER als Modal */
 #touch_controls_gfx {
     z-index: 100 !important;
@@ -1217,8 +1236,10 @@ html, body {
     text-align: center;
     width: 95%;
     box-sizing: border-box;
-    max-height: 95vh;
+    max-height: 95vh; /* Etwas mehr Höhe erlauben */
     overflow-y: auto;
+    
+    /* NEU: Schriftart für das gesamte Modal erzwingen */
     font-family: 'Tiny5', monospace !important;
     letter-spacing: 1px;
 }
@@ -1255,7 +1276,7 @@ html, body {
 /* Input-Feld */
 #name-modal input {
     padding: 0.5rem;
-    font-size: 0.8rem;
+    font-size: 1.2rem;
     width: 100%;
     max-width: 220px;
     background: #1d2b53;
@@ -1300,7 +1321,7 @@ html, body {
     color: #ffec27;
 }
 
-/* Datenschutzhinweis */
+/* NEU: Styling für den Datenschutzhinweis */
 .privacy-notice {
     font-size: 0.75rem !important;
     color: #5f574f !important;
@@ -1318,73 +1339,18 @@ html, body {
     color: #ffec27 !important;
 }
 
-/* Highscore View */
-#highscore-view h2 { 
-    color: #ffec27; 
-    margin: 0 0 1.5rem 0; 
-    font-size: 2rem; 
-}
-
-/* KRITISCH: Highscore List mit fester max-height für Scroll-Events */
-#highscore-list {
-    max-height: 60vh; /* 60% Viewport-Höhe - funktioniert auf allen Geräten */
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 5px;
-}
-
-/* Scrollbar Styling (optional, aber schick) */
-#highscore-list::-webkit-scrollbar {
-    width: 8px;
-}
-
-#highscore-list::-webkit-scrollbar-track {
-    background: #1d2b53;
-}
-
-#highscore-list::-webkit-scrollbar-thumb {
-    background: #29adff;
-    border-radius: 4px;
-}
-
-#highscore-list::-webkit-scrollbar-thumb:hover {
-    background: #ffec27;
-}
+/* Highscore View (Font wird vererbt) */
+#highscore-view h2 { color: #ffec27; margin: 0 0 1.5rem 0; font-size: 2rem; }
 
 .highscore-entry {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    padding: 0.4rem 0.5rem; 
-    margin-bottom: 0.3rem;
-    background: #1d2b53; 
-    border: 1px solid #29adff; 
-    color: #fff;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.4rem 0.5rem; margin-bottom: 0.3rem;
+    background: #1d2b53; border: 1px solid #29adff; color: #fff;
     font-size: 1rem;
-    gap: 0.5rem;
 }
 
-.highscore-rank { 
-    color: #5f574f; 
-    font-size: 0.9rem; 
-    min-width: 35px; 
-    text-align: right;
-}
-
-.highscore-name { 
-    flex: 1; 
-    text-align: left; 
-    padding: 0 0.5rem; 
-    letter-spacing: 1px; 
-}
-
-.highscore-score { 
-    font-weight: bold; 
-    color: #ff6b00; 
-    font-size: 1.1rem; 
-    min-width: 60px;
-    text-align: right;
-}
+.highscore-name { flex: 1; text-align: left; padding: 0 0.5rem; letter-spacing: 1px; }
+.highscore-score { font-weight: bold; color: #ff6b00; font-size: 1.1rem; }
 
 /* Loading Animation */
 @keyframes blink {
@@ -1403,6 +1369,8 @@ html, body {
 body.modal-open {
     overflow: hidden;
 }
+
+</style>
 
 <script>
 
@@ -1683,33 +1651,31 @@ window.submitCurrentScore = async function() {
 	
 window.skipSubmit = function() { hideModal(); };
 // Initialisiert den Highscore-View und lädt die ersten Einträge
-// Globale Variable für Rang-Tracking (füge zu deinen anderen globalen Variablen hinzu)
-let currentRankOffset = 0;
-
-// Korrigiere showHighscores:
 window.showHighscores = async function() {
+    // Zuerst das Modal öffnen und UI vorbereiten
     openModal();
     document.getElementById('game-over-view').style.display = 'none';
     document.getElementById('highscore-view').style.display = 'block';
     
+    // Zustand für den Endless Scroll zurücksetzen
     const listEl = document.getElementById('highscore-list');
-    listEl.innerHTML = '';
+    listEl.innerHTML = ''; // Liste leeren
     lastVisibleDoc = null;
     allScoresLoaded = false;
-    currentRankOffset = 0; // Rang-Counter zurücksetzen
     inHighscoreView = true;
     
+    // Erste Ladung der Scores anstoßen
     await loadMoreHighscores();
 
-    // Scroll-Listener für Nachladen
+    // Scroll-Listener für das Nachladen hinzufügen
     listEl.onscroll = () => {
-        const nearBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 100;
+        const nearBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 50;
         if (nearBottom && !isLoadingMore && !allScoresLoaded) {
-            console.log('📜 Loading more scores...');
             loadMoreHighscores();
         }
     };
 };
+
 // Lädt die nächste "Seite" an Scores (abgesicherte Version)
 async function loadMoreHighscores() {
     if (isLoadingMore || allScoresLoaded) return;
@@ -1748,14 +1714,13 @@ async function loadMoreHighscores() {
     }
 }
 
-// Korrigiere displayHighscores:
+// Zeigt die Scores an (kann jetzt Scores an die Liste anhängen)
 function displayHighscores(scores, append = false) {
     const listEl = document.getElementById('highscore-list');
     listEl.style.display = 'block';
 
     if (!append) {
         listEl.innerHTML = '';
-        currentRankOffset = 0; // Reset bei neuem Laden
     }
 
     if (scores.length === 0 && !append) {
@@ -1764,13 +1729,13 @@ function displayHighscores(scores, append = false) {
     }
     
     let html = '';
-    scores.forEach((entry, index) => {
-        const rank = currentRankOffset + index + 1; // Berechne Rang
-        const rankDisplay = `#${rank}`;
+    scores.forEach(entry => {
+        // Die Logik zur Ermittlung des Rangs muss angepasst werden, da wir seitenweise laden
+        // Wir zeigen einfach die sortierten Einträge ohne expliziten Rang
+        const medal = ''; // Ränge sind bei Endless Scroll schwierig, Medaillen ggf. weglassen
         
         html += `
             <div class="highscore-entry">
-                <span class="highscore-rank">${rankDisplay}</span>
                 <span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span>
                 <span class="highscore-score">${entry.score}</span>
             </div>
@@ -1778,7 +1743,6 @@ function displayHighscores(scores, append = false) {
     });
     
     listEl.innerHTML += html;
-    currentRankOffset += scores.length; // Offset für nächste Seite erhöhen
 }
 
 function escapeHtml(text) {
@@ -1791,7 +1755,6 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
-
 
 
 
