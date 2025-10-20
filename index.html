@@ -1135,9 +1135,8 @@ canvas{
 <!-- Firebase Config -->
 <script src="./firebase-config.js"></script>
 
-<div id="overlay"></div>
-
-<div id="name-modal">
+<div id="overlay" style="display: none;"></div>
+<div id="name-modal" style="display: none;">
     
         <div id="game-over-view">
     <div class="close-button" onclick="hideModal()">×</div>
@@ -1400,8 +1399,9 @@ a[href*="highscore"]:active {
 </style>
 
 <script>
+// NEU: Definiert die Datenbank-Variable, damit loadScores() funktioniert
+const db = firebase.firestore();
 
-// ... (Dein DOMContentLoaded-Listener bleibt unverändert) ...
 document.addEventListener('DOMContentLoaded', function() {
     const overlay = document.getElementById('overlay');
     const nameModal = document.getElementById('name-modal');
@@ -1784,6 +1784,7 @@ function escapeHtml(text) {
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
