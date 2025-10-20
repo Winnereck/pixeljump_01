@@ -1135,10 +1135,13 @@ canvas{
 <!-- Firebase Config -->
 <script src="./firebase-config.js"></script>
 
-<div id="overlay" style="display: none;"></div>
-<div id="name-modal" style="display: none;">
+<!-- Game Over Modal mit integriertem Highscore -->
+<div id="overlay"></div>
+
+<div id="name-modal">
     
-        <div id="game-over-view">
+    <!-- Game Over View -->
+    <div id="game-over-view">
     <div class="close-button" onclick="hideModal()">×</div>
     <h2>SUBMIT SCORE</h2>
     <p>SCORE: <span id="final-score">0</span></p>
@@ -1167,26 +1170,17 @@ canvas{
     
     <div id="highscore-view" style="display:none;">
         <div class="close-button" onclick="hideModal()">×</div>
-        <h2 style="color:#ffec27; margin:0 0 1rem 0; font-size:1.5rem; letter-spacing:2px;">
+        <h2 style="color:#ffec27; margin:0 0 1.5rem 0; font-size:1.5rem; letter-spacing:2px;">
             ★ HIGHSCORES ★
         </h2>
-
-                <div class="modal-filter-container" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
-            <button class="modal-filter-tab active" data-filter="all-time">ALL TIME</button>
-            <button class="modal-filter-tab" data-filter="today">TODAY</button>
-            <button class="modal-filter-tab" data-filter="this-week">THIS WEEK</button>
-            <button class="modal-filter-tab" data-filter="contest">🏆 CONTEST</button>
-        </div>
         
-        <div id="highscore-list" style="display:none; max-height: 280px; overflow-y:auto; padding-right: 5px;">
-                    </div>
+        <div id="highscore-list" style="display:none; max-height:100%; overflow-y:auto;">
+            </div>
 
         <div id="highscore-loading" style="text-align:center; color:#29adff; padding:2rem; min-height:50px; font-size:0.9rem;">
             LOADING...
         </div>
-
- 		    </div>
-</div>
+    </div>
 
 <style>
 /* Prevent zoom and scrolling */
@@ -1194,10 +1188,13 @@ html, body {
     touch-action: pan-x pan-y;
     -webkit-text-size-adjust: 100%;
 }
-/* ... (Alle deine bestehenden Styles von .close-button bis body.modal-open) ... */
+
+/* Eltern-Container für korrekte Positionierung des X */
 #game-over-view, #highscore-view {
     position: relative;
 }
+
+/* Stil für den Schließen-Button */
 .close-button {
     position: absolute;
     right: 10px;
@@ -1209,9 +1206,12 @@ html, body {
 .close-button:hover {
     color: #fff;
 }
+/* Touch Controls - NIEDRIGER als Modal */
 #touch_controls_gfx {
     z-index: 100 !important;
 }
+
+/* Modal ÜBER ALLEM */
 #overlay {
     display: none;
     position: fixed; top: 0; left: 0;
@@ -1219,9 +1219,11 @@ html, body {
     background: rgba(0, 0, 0, 0.95);
     z-index: 999999;
 }
+
 #overlay.active {
     display: block;
 }
+
 #name-modal {
     display: none;
     position: fixed;
@@ -1234,17 +1236,24 @@ html, body {
     text-align: center;
     width: 95%;
     box-sizing: border-box;
-    max-height: 95vh; 
+    max-height: 95vh; /* Etwas mehr Höhe erlauben */
     overflow-y: auto;
+    
+    /* NEU: Schriftart für das gesamte Modal erzwingen */
     font-family: 'Tiny5', monospace !important;
     letter-spacing: 1px;
 }
+
 #name-modal.active {
     display: block !important;
 }
+
+/* Container-Elemente für korrekte Positionierung */
 #game-over-view, #highscore-view {
     position: relative;
 }
+
+/* Close Button ('X') */
 .close-button {
     position: absolute;
     top: 5px; right: 10px;
@@ -1254,12 +1263,17 @@ html, body {
     transition: color 0.2s;
 }
 .close-button:hover { color: #fff; }
+
+/* Allgemeine Text-Styles im Modal */
 #name-modal h2 { color:#ff1c59; margin:0 0 1rem 0; font-size:2rem; }
 #name-modal p  { color:#fff; font-size:1.2rem; margin:0.3rem 0; }
 #name-modal #final-score { color:#ffec27; }
 #name-modal .input-container p { color:#29adff; font-size:1rem; margin-bottom:0.75rem; }
+
 .input-container { margin: 1.5rem 0 1rem 0; }
 .menu-container { margin-top: 1.5rem; text-align: left; }
+
+/* Input-Feld */
 #name-modal input {
     padding: 0.5rem;
     font-size: 1.2rem;
@@ -1280,6 +1294,8 @@ html, body {
     border-color: #ffec27;
     background: #000;
 }
+
+/* Menu Items (Pico-8 Style) */
 .menu-item {
     padding: 0.5rem 0.75rem;
     margin: 0.25rem 0;
@@ -1289,18 +1305,23 @@ html, body {
     letter-spacing: 1px;
     font-size: 1.2rem;
 }
+
 .menu-item .menu-cursor {
     display: inline-block;
     width: 1.5rem;
     color: transparent;
     transition: color 0.1s;
 }
+
 .menu-item.selected .menu-cursor {
     color: #ffec27;
 }
+
 .menu-item:hover {
     color: #ffec27;
 }
+
+/* NEU: Styling für den Datenschutzhinweis */
 .privacy-notice {
     font-size: 0.75rem !important;
     color: #5f574f !important;
@@ -1308,6 +1329,7 @@ html, body {
     letter-spacing: 0.5px;
     line-height: 1.4;
 }
+
 .privacy-notice a {
     color: #29adff !important;
     text-decoration: underline;
@@ -1316,28 +1338,9 @@ html, body {
 .privacy-notice a:hover {
     color: #ffec27 !important;
 }
-#highscore-view h2 { color: #ffec27; margin: 0 0 1.5rem 0; font-size: 2rem; }
 
-/* NEU: Filter-Tab-Stile (angepasst für Modal) */
-.modal-filter-tab {
-    background-color: #1d2b53; /* Dunkelblau */
-    color: #fff; /* Weißer Text */
-    border: 2px solid #5f574f; /* Dunkelgrauer Rand */
-    padding: 0.4rem 0.8rem;
-    cursor: pointer;
-    transition: all 0.1s;
-    font-size: 0.9rem; /* Etwas kleiner für Modal */
-    font-family: 'Tiny5', monospace;
-    text-transform: uppercase;
-}
-.modal-filter-tab:hover {
-    background-color: #5f574f; /* Grauer Hover */
-}
-.modal-filter-tab.active {
-    background-color: #ffec27; /* Gelb */
-    color: #000; /* Schwarzer Text */
-    border-color: #ffec27; /* Gelber Rand */
-}
+/* Highscore View (Font wird vererbt) */
+#highscore-view h2 { color: #ffec27; margin: 0 0 1.5rem 0; font-size: 2rem; }
 
 .highscore-entry {
     display: flex; justify-content: space-between; align-items: center;
@@ -1345,78 +1348,81 @@ html, body {
     background: #1d2b53; border: 1px solid #29adff; color: #fff;
     font-size: 1rem;
 }
+
 .highscore-name { flex: 1; text-align: left; padding: 0 0.5rem; letter-spacing: 1px; }
 .highscore-score { font-weight: bold; color: #ff6b00; font-size: 1.1rem; }
+
+/* Loading Animation */
 @keyframes blink {
     0%, 49% { opacity: 1; }
     50%, 100% { opacity: 0; }
 }
+
 #highscore-loading {
     animation: blink 1s infinite;
     padding: 2rem;
     color: #29adff;
     font-size: 1.1rem;
 }
+
+/* Body Scroll verhindern */
 body.modal-open {
     overflow: hidden;
 }
+
+		/* Top 3 Highlighting */
 .highscore-entry.top-3 {
     border-color: #ffec27;
     border-width: 2px;
     background: #1d2b53;
 }
+
 .highscore-rank { 
     color: #5f574f; 
     font-size: 0.9rem; 
     min-width: 50px; 
     text-align: left;
 }
+
+/* Button Hover Effect */
 a[href*="highscore"]:hover {
     transform: translateY(-2px);
     box-shadow: 6px 6px 0px 0px #000 !important;
     background: #74d7ff !important;
 }
+
 a[href*="highscore"]:active {
     transform: translateY(2px);
     box-shadow: 2px 2px 0px 0px #000 !important;
 }
 
-/* NEU: Scrollbar-Styling für Highscore-Liste im Modal */
-#highscore-list::-webkit-scrollbar {
-    width: 10px;
-}
-#highscore-list::-webkit-scrollbar-track {
-    background: #000;
-    border: 1px solid #5f574f;
-}
-#highscore-list::-webkit-scrollbar-thumb {
-    background: #29adff;
-}
-#highscore-list::-webkit-scrollbar-thumb:hover {
-    background: #ffec27;
-}
-
 </style>
 
 <script>
-// NEU: Definiert die Datenbank-Variable, damit loadScores() funktioniert
-const db = firebase.firestore();
 
 document.addEventListener('DOMContentLoaded', function() {
     const overlay = document.getElementById('overlay');
     const nameModal = document.getElementById('name-modal');
+
     if (overlay) document.body.appendChild(overlay);
     if (nameModal) document.body.appendChild(nameModal);
     console.log('✅ Modal-Elemente an das Ende des DOM verschoben.');
+
     const nameInput = document.getElementById('player-name');
     if (nameInput) {
+        // Mehrere Events für maximale Kompatibilität
         ['blur', 'focusout'].forEach(eventType => {
             nameInput.addEventListener(eventType, () => {
                 console.log('🎹 Keyboard event:', eventType);
+                
+                // Warte bis Tastatur wirklich weg ist
                 setTimeout(() => {
+                    // Scroll innerhalb iFrame
                     window.scrollTo(0, 0);
                     document.body.scrollTop = 0;
                     document.documentElement.scrollTop = 0;
+                    
+                    // Message an Parent senden
                     try {
                         if (window.parent && window.parent !== window) {
                             window.parent.postMessage({ 
@@ -1428,23 +1434,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (e) {
                         console.error('Failed to send message:', e);
                     }
-                }, 300); 
+                }, 300); // Längere Verzögerung
             });
         });
     }
-
-    // NEU: Event Listener für Filter-Tabs im Modal
-    document.querySelectorAll('.modal-filter-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            document.querySelectorAll('.modal-filter-tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            currentFilter = this.dataset.filter;
-            // Lade die Scores für den neuen Filter
-            loadScores(false); 
-        });
-    });
 });
-// ... (Deine GPIO-Definitionen bleiben unverändert) ...
+// GPIO Pin Definitionen
 const GPIO_GAME_STATE = 0;
 const GPIO_SCORE_HIGH = 1;
 const GPIO_SCORE_LOW = 2;
@@ -1453,25 +1448,24 @@ const GPIO_MODAL_LEADERBOARD = 4;
 
 // Globale Zustandsvariablen
 let pendingScore = 0;
-// ... (highscoresCache, menuIndex, etc. bleiben unverändert) ...
 let highscoresCache = [];
 let menuIndex = 0;
 let inHighscoreView = false;
-let modalDebounce = false; 
+let modalDebounce = false; // Verhindert sofortige Aktion nach Öffnen
 let isLoadingMore = false;
-let lastVisibleDoc = null; 
+let lastVisibleDoc = null; // Speichert den letzten Score für die nächste Abfrage
 let allScoresLoaded = false;
-let currentFilter = 'all-time'; // NEU: Globale Variable für Filter
-let searchQuery = ''; // NEU: Globale Variable für Suche (derzeit ungenutzt im Modal, aber für loadScores benötigt)
 
-
-// ... (initializeGameBridge, p8_run_cart, generateRandomName, checkGameTriggers, checkModalControls bleiben unverändert) ...
 console.log('🎮 Game Bridge initialisiert und wartet auf Spielstart...');
+
+// Diese Funktion wird erst aufgerufen, wenn PICO-8 garantiert läuft.
 function initializeGameBridge() {
     console.log('✅ PICO-8 ist gestartet. Bridge wird aktiviert.');
     setInterval(checkGameTriggers, 100);
     setInterval(checkModalControls, 50);
 }
+
+// Erweitere die p8_run_cart Funktion, um den Start der Bridge zu steuern
 if (typeof p8_run_cart === 'function') {
     const original_p8_run_cart = p8_run_cart;
     p8_run_cart = function() {
@@ -1479,20 +1473,33 @@ if (typeof p8_run_cart === 'function') {
         initializeGameBridge();
     };
 }
+
+	// Erzeugt einen zufälligen, thematisch passenden Namen mit einer Zahl
 function generateRandomName() {
     const ADJECTIVES = ["Pixel", "Cosmic", "Robo", "Neon", "Data", "Retro", "Astro", "Turbo", "Ghostly", "Quantum"];
     const NOUNS = ["Jumper", "Pilot", "Wizard", "Knight", "Ranger", "Bot", "Ghost", "Explorer", "Ninja", "Surfer"];
+
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
     const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+    
+    // NEU: Erzeugt eine zufällige Zahl zwischen 0 und 99
     const num = Math.floor(Math.random() * 100);
+
+    // NEU: Fügt die Zahl zum Namen hinzu
+    // (Optional: .toString().padStart(2, '0') würde eine '07' aus '7' machen)
     return `${adj} ${noun} ${num}`;
 }
+
+// Prüft die GPIO-Pins auf Anfragen vom Spiel
 function checkGameTriggers() {
     if (typeof pico8_gpio === 'undefined' || !pico8_gpio) return;
+    
     const modal = document.getElementById('name-modal');
     if (!modal || modal.classList.contains('active')) return;
+
     const triggerSubmit = pico8_gpio[GPIO_MODAL_SUBMIT];
     const triggerLeaderboard = pico8_gpio[GPIO_MODAL_LEADERBOARD];
+    
     if (triggerSubmit === 1) {
         const scoreHigh = pico8_gpio[GPIO_SCORE_HIGH] || 0;
         const scoreLow = pico8_gpio[GPIO_SCORE_LOW] || 0;
@@ -1500,23 +1507,29 @@ function checkGameTriggers() {
         showSubmitModal();
         pico8_gpio[GPIO_MODAL_SUBMIT] = 0;
     }
+    
     if (triggerLeaderboard === 1) {
         showLeaderboardModal();
         pico8_gpio[GPIO_MODAL_LEADERBOARD] = 0;
     }
 }
+
+// Liest die PICO-8 Controls und "konsumiert" sie für das Modal
 function checkModalControls() {
     const modal = document.getElementById('name-modal');
     if (!modal || !modal.classList.contains('active') || typeof pico8_buttons === 'undefined') {
         return;
     }
+
     if (modalDebounce) {
         modalDebounce = false;
         pico8_buttons[0] = 0;
         return;
     }
+
     const buttons = pico8_buttons[0];
-    pico8_buttons[0] = 0; 
+    pico8_buttons[0] = 0; // Input sofort konsumieren!
+
     if (buttons > 0) {
         if (!inHighscoreView) {
             if (buttons & 0x4) { menuIndex = (menuIndex - 1 + 3) % 3; updateMenuSelection(); }
@@ -1527,19 +1540,32 @@ function checkModalControls() {
         }
     }
 }
-// ... (showSubmitModal, openModal, hideModal, updateMenuSelection, selectMenuItem, submitCurrentScore, skipSubmit bleiben unverändert) ...
+
+// --- Deine restlichen Hilfsfunktionen ---
+// (Hier werden sie alle zur Vollständigkeit aufgelistet)
+
 function showSubmitModal() {
     document.getElementById('final-score').textContent = pendingScore;
     document.getElementById('game-over-view').style.display = 'block';
     document.getElementById('highscore-view').style.display = 'none';
     openModal();
     const nameInput = document.getElementById('player-name');
+    
+    // NEU: Generiere sofort einen Namen und fülle ihn ein
     nameInput.value = generateRandomName();
-    nameInput.select(); 
+    nameInput.select(); // Markiere den Text, damit User ihn leicht ersetzen kann
+    
     if (!/Mobi|Android/i.test(navigator.userAgent)) {
        setTimeout(() => nameInput.focus(), 100);
     }
 }
+
+function showLeaderboardModal() {
+    document.getElementById('game-over-view').style.display = 'none';
+    document.getElementById('highscore-view').style.display = 'block';
+    showHighscores();
+}
+
 function openModal() {
     document.getElementById('overlay').classList.add('active');
     document.getElementById('name-modal').classList.add('active');
@@ -1549,15 +1575,21 @@ function openModal() {
     modalDebounce = true;
     updateMenuSelection();
 }
+
 function hideModal() {
     document.getElementById('overlay').classList.remove('active');
     document.getElementById('name-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
     inHighscoreView = false;
+    
+    // NEU: Nach Modal-Schließen sofort scrollen
     setTimeout(() => {
+        // Scroll innerhalb iFrame
         window.scrollTo(0, 0);
         document.body.scrollTop = 0;
         document.documentElement.scrollTop = 0;
+        
+        // Message an Parent
         try {
             window.parent.postMessage({ 
                 type: 'SCROLL_TO_TOP',
@@ -1567,9 +1599,11 @@ function hideModal() {
         } catch(e) {
             console.log('Message send failed:', e);
         }
+        
         console.log('🔄 Scroll after modal close');
     }, 100);
 }
+
 function updateMenuSelection() {
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach((item, index) => {
@@ -1582,33 +1616,45 @@ function updateMenuSelection() {
         }
     });
 }
+
 function selectMenuItem() {
     if (menuIndex === 0) submitCurrentScore();
     else if (menuIndex === 1) showHighscores();
     else if (menuIndex === 2) skipSubmit();
 }
+
 window.submitCurrentScore = async function() {
     const nameInput = document.getElementById('player-name');
     const playerName = nameInput.value.trim();
     const saveItem = document.querySelectorAll('.menu-item')[0];
+    
     if (nameInput) {
         nameInput.blur();
     }
+    
     document.body.classList.remove('modal-open');
+    
     setTimeout(() => {
+        // Scroll nur INNERHALB des iFrames
         window.scrollTo(0, 0);
         document.body.scrollTop = 0;
         document.documentElement.scrollTop = 0;
+        
+        // Sende Message an Parent (KEIN direkter Zugriff!)
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({ 
                 type: 'SCROLL_TO_TOP',
                 source: 'pixeljump'
-            }, '*'); 
+            }, '*'); // Oder spezifische Domain statt '*'
         }
+        
         console.log('⬆️ Scroll executed, message sent');
     }, 200);
+    
     if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVING...';
+
     await new Promise(resolve => setTimeout(resolve, 500)); 
+
     if (typeof submitScoreToFirebase === 'function') {
         const result = await submitScoreToFirebase(playerName, pendingScore);
         if (result.success) {
@@ -1616,7 +1662,7 @@ window.submitCurrentScore = async function() {
             setTimeout(() => {
                 hideModal();
                 if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
-G          }, 700); 
+            }, 700); 
         } else {
             document.body.classList.add('modal-open');
             if (saveItem) saveItem.innerHTML = '<span class="menu-cursor">▶</span> SAVE SCORE';
@@ -1628,12 +1674,11 @@ G          }, 700); 
         alert('Firebase not ready');
     }
 };
+	
 window.skipSubmit = function() { hideModal(); };
-
-// --- NEUE/ERSETZTE HIGHSCORE-FUNKTIONEN ---
-
-// ERSETZT: showHighscores
-// Setzt den Filter zurück und ruft die neue Ladefunktion auf
+// Initialisiert den Highscore-View und lädt die ersten Einträge
+// Zeigt die Top 15 Scores und einen Link zur vollständigen Liste
+// Zeigt die Top 15 Scores und einen Link zur vollständigen Liste
 window.showHighscores = async function() {
     openModal();
     document.getElementById('game-over-view').style.display = 'none';
@@ -1642,148 +1687,120 @@ window.showHighscores = async function() {
     const listEl = document.getElementById('highscore-list');
     listEl.innerHTML = '';
     inHighscoreView = true;
-    allScoresLoaded = false;
-    lastVisibleDoc = null;
-
-    // Setze Filter visuell auf 'all-time' zurück
-    currentFilter = 'all-time';
-    document.querySelectorAll('.modal-filter-tab').forEach(t => t.classList.remove('active'));
-    const allTimeTab = document.querySelector('.modal-filter-tab[data-filter="all-time"]');
-    if (allTimeTab) allTimeTab.classList.add('active');
     
-    // Lade die Scores für den 'all-time'-Filter
-    await loadScores(false);
+    // Lade nur die Top 15
+    await loadTop15Highscores();
 };
 
-// NEU: loadScores (Kopiert von Highscore-Seite, angepasst für Modal-IDs und Top-10-Limit)
-async function loadScores(append = false) {
-    const isTimeFiltered = ['today', 'this-week', 'contest'].includes(currentFilter);
-    // Pagination (append) ist im Modal nicht vorgesehen
-    if (isLoadingMore) return;
+// Lädt nur die Top 15 Scores
+async function loadTop15Highscores() {
+    const loadingEl = document.getElementById('highscore-loading');
+    loadingEl.style.display = 'block';
+    loadingEl.textContent = 'LOADING...';
 
-    isLoadingMore = true;
-    const loadingEl = document.getElementById('highscore-loading');
-    const listEl = document.getElementById('highscore-list');
-    
-    loadingEl.style.display = 'block';
-    loadingEl.textContent = 'LOADING...';
-    if (!append) listEl.innerHTML = '';
-
-    try {
-        let query = db.collection('highscores');
-        
-        // Filter
-        if (currentFilter === 'today') {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            query = query.where('timestamp', '>=', today.getTime());
-        } else if (currentFilter === 'this-week') {
-            const weekAgo = new Date();
-            weekAgo.setDate(weekAgo.getDate() - 7); weekAgo.setHours(0, 0, 0, 0);
-            query = query.where('timestamp', '>=', weekAgo.getTime());
-        } else if (currentFilter === 'contest') {
-            const contestStartDate = new Date('2099-01-01').getTime();
-            query = query.where('timestamp', '>=', contestStartDate);
-        }
-
-        // Sortierung
-        if (currentFilter === 'all-time') {
-            query = query.orderBy('score', 'desc');
-        } else {
-            // Zeitfilter müssen erst nach Zeit sortiert abgerufen werden
-            query = query.orderBy('timestamp', 'desc');
-        }
-
-        // Limit & Pagination
-        // Für Zeitfilter holen wir mehr, um client-seitig nach Score zu sortieren
-        // Für All-Time holen wir nur die Top 10
-        const fetchLimit = isTimeFiltered ? 200 : 10;
-        query = query.limit(fetchLimit);
-
-        const snapshot = await query.get();
-        let docsToDisplay = snapshot.docs;
-
-        // Client-seitige Sortierung nach SCORE für Zeitfilter
-        if (isTimeFiltered) {
-            docsToDisplay.sort((a, b) => b.data().score - a.data().score);
-            // Beschränke auf Top 10 NACH der Sortierung
-            docsToDisplay = docsToDisplay.slice(0, 10);
-        }
-
-        // Nachrichten für leere Ergebnisse
-        if (docsToDisplay.length === 0) {
-            if (currentFilter === 'contest') {
-                 listEl.innerHTML = `<div style="text-align:center; padding:1rem; color:#fff; font-size:0.9rem; line-height: 1.5;">NO ACTIVE CONTEST.<br>FOLLOW @RETROSHAPESCOM</div>`;
-            } else {
-                 listEl.innerHTML = '<div style="text-align:center; padding:1rem; color:#5f574f; font-size:0.9rem;">NO SCORES IN THIS PERIOD.</div>';
-            }
-        }
-
-        if (docsToDisplay.length > 0) {
-            displayScores(docsToDisplay); // Ruft die neue displayScores auf
-        }
-
-    } catch (error) {
-        console.error('Error loading scores:', error);
-        loadingEl.innerHTML = '<span style="color:#ff1c59;">ERROR LOADING SCORES</span>';
-    } finally {
-        isLoadingMore = false;
-        loadingEl.style.display = 'none';
-    }
+    try {
+        if (typeof getHighscoresPaged === 'function') {
+            const result = await getHighscoresPaged(15, null);
+            displayTop15Scores(result.scores);
+        } else {
+            console.error("Funktion getHighscoresPaged ist nicht definiert!");
+            loadingEl.innerHTML = '<span style="color:#ff1c59;">CONFIG ERROR</span>';
+        }
+    } catch (error) {
+        console.error('Failed to load highscores:', error);
+        loadingEl.innerHTML = '<span style="color:#ff1c59;">LOAD FAILED</span>';
+    } finally {
+        loadingEl.style.display = 'none';
+    }
 }
 
-// NEU: displayScores (Kopiert von Highscore-Seite, angepasst für Modal-HTML)
-function displayScores(docs) {
-    const listEl = document.getElementById('highscore-list');
-    listEl.style.display = 'block';
-    listEl.innerHTML = ''; // Startet die Liste bei jedem Filter-Klick neu
+// Zeigt die Top 15 Scores mit Rängen und Link zur vollständigen Liste
+function displayTop15Scores(scores) {
+    const listEl = document.getElementById('highscore-list');
+    listEl.style.display = 'block';
 
-    let html = '';
-    docs.forEach((doc, index) => {
-        const data = doc.data();
-        const rank = index + 1;
-        const rankDisplay = `#${rank}`;
-        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
-        
-        html += `
-            <div class="highscore-entry ${rank <= 3 ? 'top-3' : ''}">
-                <span class="highscore-rank">${medal} ${rankDisplay}</span>
-                <span class="highscore-name">${escapeHtml(data.name).toUpperCase()}</span>
-                <span class="highscore-score">${data.score.toLocaleString()}</span>
-            </div>
-        `;
-    });
-
-    // Füge Link zur vollständigen Highscore-Seite hinzu
-    html += `
-        <div style="text-align:center; margin-top:1.5rem; padding-top:1rem; border-top:2px solid #5f574f;">
-            <a href="https://retroshapes.com/pages/pixel-jump-highscore" 
-               target="_blank"
-               style="display:inline-block; background:#29adff; color:#000; 
-                      padding:0.6rem 1.2rem; border:3px solid #000; 
-                      font-size:1rem; letter-spacing:1px; text-decoration:none;
-                      box-shadow:4px 4px 0px 0px #000; transition:all 0.1s;">
-                🏆 VIEW ALL HIGHSCORES
-            </a>
-            <p style="color:#5f574f; font-size:0.8rem; margin-top:0.8rem;">
-                SEE THE COMPLETE LEADERBOARD
-            </p>
-        </div>
-    `;
-    
-    listEl.innerHTML = html;
+    if (scores.length === 0) {
+        document.getElementById('highscore-loading').textContent = "NO SCORES YET";
+        return;
+    }
+    
+    let html = '';
+    scores.forEach((entry, index) => {
+        const rank = index + 1;
+        const rankDisplay = `#${rank}`;
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+        
+        html += `
+            <div class="highscore-entry ${rank <= 3 ? 'top-3' : ''}">
+                <span class="highscore-rank">${medal} ${rankDisplay}</span>
+                <span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span>
+                <span class="highscore-score">${entry.score}</span>
+            </div>
+        `;
+    });
+    
+    // Füge Link zur vollständigen Highscore-Seite hinzu
+    html += `
+        <div style="text-align:center; margin-top:2rem; padding:1rem 0; border-top:2px solid #5f574f;">
+            <a href="https://retroshapes.com/pages/pixel-jump-highscore" 
+               target="_blank"
+               style="display:inline-block; background:#29adff; color:#000; 
+                      padding:0.75rem 1.5rem; border:3px solid #000; 
+                      font-size:1.25rem; letter-spacing:1px; text-decoration:none;
+                      box-shadow:4px 4px 0px 0px #000; transition:all 0.1s;">
+                🏆 VIEW ALL HIGHSCORES
+            </a>
+            <p style="color:#5f574f; font-size:0.9rem; margin-top:1rem;">
+                SEE THE COMPLETE LEADERBOARD
+            </p>
+        </div>
+    `;
+    
+    listEl.innerHTML = html;
 }
-	
+
+// Zeigt die Scores an (kann jetzt Scores an die Liste anhängen)
+function displayHighscores(scores, append = false) {
+    const listEl = document.getElementById('highscore-list');
+    listEl.style.display = 'block';
+
+    if (!append) {
+        listEl.innerHTML = '';
+    }
+
+    if (scores.length === 0 && !append) {
+        document.getElementById('highscore-loading').textContent = "NO SCORES YET";
+        return;
+    }
+    
+    let html = '';
+    scores.forEach(entry => {
+        // Die Logik zur Ermittlung des Rangs muss angepasst werden, da wir seitenweise laden
+        // Wir zeigen einfach die sortierten Einträge ohne expliziten Rang
+        const medal = ''; // Ränge sind bei Endless Scroll schwierig, Medaillen ggf. weglassen
+        
+        html += `
+            <div class="highscore-entry">
+                <span class="highscore-name">${escapeHtml(entry.name).toUpperCase()}</span>
+                <span class="highscore-score">${entry.score}</span>
+            </div>
+        `;
+    });
+    
+    listEl.innerHTML += html;
+}
+
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 </script>
 
 </div> <!-- body_0 -->
 </body>
 </html>
+
 
 
 
